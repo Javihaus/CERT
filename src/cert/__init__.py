@@ -13,6 +13,7 @@ from cert.core.metrics import (
     pipeline_health_score,
 )
 from cert.models import ModelRegistry, ModelBaseline, get_model_baseline
+from cert.utils import print_models, list_models, get_model_info
 
 # Note: ObservabilityTracker and Pipeline will be available when implemented
 # from cert.core.observability import ObservabilityTracker
@@ -26,6 +27,9 @@ __all__ = [
     "ModelRegistry",
     "ModelBaseline",
     "get_model_baseline",
+    "print_models",
+    "list_models",
+    "get_model_info",
     # "ObservabilityTracker",
     # "Pipeline",
     # "PipelineConfig",

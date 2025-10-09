@@ -42,6 +42,25 @@ Traditional monitoring (latency, tokens, errors) doesn't answer these questions.
 pip install cert-sdk
 ```
 
+### Browse Available Models
+
+```python
+import cert
+
+# Show all validated models with baselines
+cert.print_models()
+
+# Show only OpenAI models
+cert.print_models(provider="openai")
+
+# Get detailed info about a specific model
+cert.get_model_info("gpt-4o")
+
+# Compare models side-by-side
+from cert.utils.models import compare_models
+compare_models("gpt-4o", "grok-3", "gemini-3.5-pro")
+```
+
 ### Basic Usage - Check Your Agent's Consistency
 
 ```python
