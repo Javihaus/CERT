@@ -1,0 +1,25 @@
+# Include documentation
+include README.md
+include LICENSE
+include TERMINOLOGY_UPDATE.md
+include VERIFICATION.md
+include IMPLEMENTATION_STATUS.md
+
+# Include examples
+recursive-include examples *.py
+recursive-include examples *.ipynb
+recursive-include examples *.md
+
+# Include test files
+recursive-include tests *.py
+
+# Include configuration files
+include pyproject.toml
+include setup.py
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude .git*
