@@ -40,11 +40,11 @@ def main():
     print(f"Claude baseline:    C={claude.consistency:.3f}, "
           f"mu={claude.mean_performance:.3f}")
 
-    # Calculate expected coordination
+    # Calculate expected context propagation effect
     if claude.coordination_2agent:
-        gamma = claude.coordination_2agent
+        gamma = claude.coordination_2agent  # Context propagation effect from paper
     else:
-        gamma = 1.15  # Typical value from paper
+        gamma = 1.15  # Typical context effect value from paper
 
     # Calculate pipeline health (Equation 7 from paper)
     epsilon = 0.05  # Low prediction error
@@ -56,8 +56,8 @@ def main():
         observability_coverage=observability
     )
 
-    print(f"\nCoordination effect: gamma={gamma:.3f}")
-    print(f"Pipeline health:     H={health:.3f}")
+    print(f"\nContext propagation effect: gamma={gamma:.3f}")
+    print(f"Pipeline health:            H={health:.3f}")
 
     if health > 0.8:
         status = "HEALTHY"
@@ -77,9 +77,13 @@ def main():
     print("\n" + "="*70)
     print("What this means:")
     print("="*70)
-    print(f"  • gamma > 1.0: Sequential context improves output quality")
+    print(f"  • gamma > 1.0: Sequential context accumulation improves performance")
     print(f"  • H > 0.8: Pipeline is stable for production")
     print(f"  • C={gpt4.consistency:.3f}: GPT-4o shows consistent behavior")
+    print(f"\nWhat gamma measures:")
+    print(f"  - How attention mechanisms process extended context")
+    print(f"  - Performance change when models see accumulated output")
+    print(f"  - NOT agent coordination or intelligence")
 
     print("\n" + "="*70)
     print("Next steps:")

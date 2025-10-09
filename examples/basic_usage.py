@@ -188,35 +188,54 @@ async def measure_performance_distribution_simple(provider, model_baseline, n_tr
     return mu, sigma
 
 
-async def demonstrate_coordination_prediction(model_baseline):
+async def demonstrate_context_effect_prediction(model_baseline):
     """
-    Demonstrate coordination effect prediction using validated baseline.
+    Demonstrate context propagation effect prediction using validated baseline.
 
     Shows how to use paper's baselines for pipeline prediction without
-    needing to run actual coordination experiments.
+    needing to run actual sequential processing experiments.
+
+    What this measures: Performance changes when models process accumulated
+    context in sequential pipelines (attention mechanism behavior).
+
+    What this does NOT measure: Agent coordination, intelligence, or why
+    context helps (black box measurement).
 
     Args:
         model_baseline: Validated baseline from registry
     """
     print(f"\n{'='*70}")
-    print(f"Coordination Effect Prediction (from Paper)")
+    print(f"Context Propagation Effect Prediction (from Paper)")
     print(f"{'='*70}")
 
     if model_baseline.coordination_2agent:
-        print(f"\nValidated 2-agent coordination effect from paper:")
-        print(f"  γ = {model_baseline.coordination_2agent:.3f}")
+        gamma = model_baseline.coordination_2agent
+        print(f"\nValidated 2-model sequential context effect from paper:")
+        print(f"  γ = {gamma:.3f}")
+        print(f"  (Measures: performance change from context accumulation)")
 
-        # Calculate expected coordination performance
+        # Calculate expected sequential processing performance
         independent_perf = model_baseline.mean_performance
-        coordinated_perf = independent_perf * independent_perf * model_baseline.coordination_2agent
+        sequential_perf = independent_perf * independent_perf * gamma
 
-        print(f"\nPrediction for 2-agent sequential pipeline:")
+        print(f"\nPrediction for 2-model sequential pipeline:")
         print(f"  Independent performance: {independent_perf:.3f}")
-        print(f"  Expected coordinated:    {coordinated_perf:.3f}")
-        print(f"  Improvement:             {(coordinated_perf/independent_perf - 1)*100:+.1f}%")
+        print(f"  Expected sequential:     {sequential_perf:.3f}")
+        print(f"  Improvement:             {(sequential_perf/independent_perf - 1)*100:+.1f}%")
+
+        print(f"\nOperational Interpretation:")
+        if gamma > 1.2:
+            print(f"  → Strong context propagation benefit")
+            print(f"  → Sequential processing architecture recommended")
+        elif gamma > 1.0:
+            print(f"  → Moderate context propagation benefit")
+            print(f"  → Sequential processing helps but gains are modest")
+        else:
+            print(f"  → Context accumulation does not improve performance")
+            print(f"  → Consider single-model or parallel architectures")
     else:
-        print("\n⚠ 2-agent coordination baseline not available for this model.")
-        print("  You can measure it using coordination experiments.")
+        print("\n⚠ 2-model context effect baseline not available for this model.")
+        print("  You can measure it using sequential pipeline experiments.")
 
 
 async def main():
@@ -264,7 +283,7 @@ async def main():
     print("\nThis will:")
     print("1. Measure behavioral consistency (10 trials)")
     print("2. Measure performance distribution (5 prompts)")
-    print("3. Show coordination predictions from paper")
+    print("3. Show context propagation predictions from paper")
     print("\nEstimated time: 2-3 minutes")
     print("\nPress Enter to continue or Ctrl+C to cancel...")
     input()
@@ -279,8 +298,8 @@ async def main():
         provider, model_baseline, n_trials=5
     )
 
-    # Show coordination predictions
-    await demonstrate_coordination_prediction(model_baseline)
+    # Show context propagation predictions
+    await demonstrate_context_effect_prediction(model_baseline)
 
     # Summary
     print(f"\n{'='*70}")
@@ -302,9 +321,9 @@ async def main():
     print(f"{'='*70}")
     print("\nNext steps:")
     print("  - Run more trials for statistical significance (20+ recommended)")
-    print("  - Measure coordination effects with multi-agent pipelines")
+    print("  - Measure context effects with sequential pipelines")
     print("  - See advanced_usage.py for custom models and domain-specific tasks")
-    print(f"  - See examples/two_agent_coordination.py for coordination measurement")
+    print(f"  - See langchain_research_writer_pipeline.ipynb for real pipeline example")
 
 
 if __name__ == "__main__":

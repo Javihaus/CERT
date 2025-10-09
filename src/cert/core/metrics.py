@@ -1,13 +1,13 @@
 """
 Core CERT metric calculations implementing the framework from:
-"CERT: Instrumentation and Metrics for Production LLM Coordination"
+"CERT: Instrumentation and Metrics for Production LLM Sequential Processing"
 
 This module implements the five core CERT metrics with exact formulas from the paper:
 1. Behavioral Consistency C(Ai, p) - Equation 1
 2. Empirical Performance Distribution (μi,C, σi,C) - Equation 2
-3. Coordination Effect γ - Equation 3
+3. Context Propagation Effect γ - Equation 3
 4. Prediction Error ε - Equation 6
-5. Pipeline Health Score Hcoord - Equation 7
+5. Pipeline Health Score Hpipe - Equation 7
 """
 
 from typing import List, Tuple, Optional
@@ -108,33 +108,61 @@ def coordination_effect(
     independent_performances: List[float],
 ) -> float:
     """
-    Calculate Coordination Effect γ from Equation 3.
+    Calculate Context Propagation Effect γ from Equation 3.
 
-    For agents Ai, Aj collaborating on task t via coordination pattern P,
-    measures whether coordination produces synergistic (γ > 1) or
-    detrimental (γ < 1) effects.
+    Measures performance changes when models process accumulated context in
+    sequential pipelines compared to independent execution. This quantifies
+    how attention mechanisms behave when later models see outputs from
+    earlier models.
+
+    **What this measures:**
+    - Statistical characterization of sequential processing behavior
+    - Performance change from context accumulation (attention mechanism effects)
+    - Operational metric for architecture selection
+
+    **What this does NOT measure:**
+    - ❌ Agent coordination, collaboration, or planning
+    - ❌ Intelligence or reasoning capabilities
+    - ❌ WHY context helps (black box measurement)
 
     Mathematical definition:
-    $$\\gamma^P_{i,j}(t) = \\frac{\\mathbb{E}[P^{\\text{coordinated}}_{ij}(t)]}{\\mathbb{E}[P^{\\text{independent}}_i(t)] \\cdot \\mathbb{E}[P^{\\text{independent}}_j(t)]}$$
+    $$\\gamma^P_{i,j}(t) = \\frac{\\mathbb{E}[P^{\\text{sequential}}_{ij}(t)]}{\\mathbb{E}[P^{\\text{independent}}_i(t)] \\cdot \\mathbb{E}[P^{\\text{independent}}_j(t)]}$$
 
     Args:
-        coordinated_performance: Expected performance when agents coordinate.
-        independent_performances: List of expected independent performances for each agent.
+        coordinated_performance: Performance when models process sequentially
+                                (later models see accumulated context).
+        independent_performances: List of independent performance values for each model.
 
     Returns:
-        Coordination effect γ.
-        γ > 1: Synergistic coordination (agents benefit from interaction)
-        γ = 1: No coordination effect (independent operation)
-        γ < 1: Detrimental interaction (coordination degrades performance)
+        Context propagation effect γ.
+        γ > 1: Sequential context accumulation improves performance
+        γ = 1: No benefit from accumulated context
+        γ < 1: Context accumulation degrades performance (attention dilution,
+               context window issues)
 
     Example:
-        >>> # Two-agent coordination with synergistic effect
+        >>> # Two-model sequential pipeline with context benefit
         >>> gamma = coordination_effect(0.75, [0.60, 0.65])
-        >>> print(f"γ = {gamma:.3f}")  # γ > 1 indicates positive coordination
+        >>> print(f"γ = {gamma:.3f}")  # γ > 1 indicates context helps
+
+        >>> # Interpretation
+        >>> if gamma > 1.2:
+        ...     print("Strong context propagation - sequential architecture recommended")
+        ... elif gamma > 1.0:
+        ...     print("Moderate benefit from sequential processing")
+        ... else:
+        ...     print("Sequential processing degrades performance")
+
+    Operational Interpretation (from paper validation):
+        - Gemini: γ=1.137 (high baseline, weak context effect)
+        - GPT-4:  γ=1.562 (moderate baseline, strong context effect)
+        - Grok:   γ=1.625 (moderate baseline, strong context effect)
+        - Claude: γ=1.462 (low baseline, strong context effect)
 
     Note:
-        For n-agent sequential pipelines, the denominator is the product of
-        all n independent agent performances.
+        - For n-model pipelines, denominator is product of all n independent performances
+        - "coordination_effect" function name retained for API compatibility
+        - This is engineering characterization, not coordination science
     """
     if not independent_performances:
         raise ValueError("Need at least one independent performance value")
@@ -160,21 +188,21 @@ def performance_baseline(
     """
     Calculate Performance Baseline Pbaseline(A, t) from Equation 5.
 
-    For a sequential coordination pipeline A = {A1, ..., An} executing task t,
-    predicts expected performance incorporating coordination effects and
+    For a sequential processing pipeline A = {A1, ..., An} executing task t,
+    predicts expected performance incorporating context propagation effects and
     information degradation.
 
     Mathematical definition:
     $$P_{\\text{baseline}}(\\mathcal{A}, t) = \\bar{\\mu} \\cdot \\left(1 + \\frac{\\bar{\\gamma} - 1}{\\sqrt{n-1}}\\right) \\cdot \\phi(n)$$
 
     where:
-    - $\\bar{\\mu} = \\frac{1}{n} \\sum_{i=1}^{n} \\mu_i$ is mean agent performance
-    - $\\bar{\\gamma}$ is mean coordination effect
+    - $\\bar{\\mu} = \\frac{1}{n} \\sum_{i=1}^{n} \\mu_i$ is mean model performance
+    - $\\bar{\\gamma}$ is mean context propagation effect
     - $\\phi(n) = \\alpha^{n-1}$ models information degradation with α ∈ [0.9, 0.95]
 
     Args:
-        agent_means: Array of mean baseline performances μi for each agent.
-        gamma_mean: Mean coordination effect γ̄ across agent pairs.
+        agent_means: Array of mean baseline performances μi for each model.
+        gamma_mean: Mean context propagation effect γ̄ across model pairs.
         alpha: Information degradation parameter (default 0.93 from paper).
                Controls how information quality degrades through pipeline.
 
@@ -182,7 +210,7 @@ def performance_baseline(
         Predicted baseline performance for the pipeline.
 
     Example:
-        >>> # Five-agent pipeline
+        >>> # Five-model sequential pipeline
         >>> means = np.array([0.60, 0.65, 0.62, 0.68, 0.64])
         >>> gamma_bar = 1.35
         >>> baseline = performance_baseline(means, gamma_bar, alpha=0.93)
@@ -190,7 +218,7 @@ def performance_baseline(
 
     Note:
         - Paper empirically determined α = 0.93 but this should be configurable
-        - For two-agent pipelines (n=2), the sqrt term becomes 1.0
+        - For two-model pipelines (n=2), the sqrt term becomes 1.0
         - Information degradation φ(n) accounts for context loss in long chains
     """
     n = len(agent_means)
@@ -261,18 +289,18 @@ def pipeline_health_score(
     observability_coverage: float,
 ) -> float:
     """
-    Calculate Pipeline Health Score Hcoord(t) from Equation 7.
+    Calculate Pipeline Health Score Hpipe(t) from Equation 7.
 
     Composite operational metric integrating prediction accuracy,
-    coordination strength, and observability coverage into a single
+    context propagation strength, and observability coverage into a single
     health indicator for runtime monitoring.
 
     Mathematical definition:
-    $$H_{\\text{coord}}(t) = \\frac{1}{1 + \\epsilon_{\\text{pred}}(t)} \\times \\min(1, \\bar{\\gamma}(t)) \\times C_{\\text{obs}}(t)$$
+    $$H_{\\text{pipe}}(t) = \\frac{1}{1 + \\epsilon_{\\text{pred}}(t)} \\times \\min(1, \\bar{\\gamma}(t)) \\times C_{\\text{obs}}(t)$$
 
     Args:
         epsilon: Prediction error εpred from Equation 6.
-        gamma_mean: Mean coordination effect γ̄ (capped at 1.0 for stability).
+        gamma_mean: Mean context propagation effect γ̄ (capped at 1.0 for stability).
         observability_coverage: Fraction of instrumented interactions Cobs.
 
     Returns:
@@ -280,11 +308,11 @@ def pipeline_health_score(
         Higher scores indicate healthier, more predictable pipelines.
 
     Example:
-        >>> # Healthy pipeline: low error, positive coordination, high coverage
+        >>> # Healthy pipeline: low error, positive context effect, high coverage
         >>> health = pipeline_health_score(epsilon=0.05, gamma_mean=1.35, observability_coverage=0.95)
         >>> print(f"H = {health:.2f}")  # H ≈ 0.90 (healthy)
 
-        >>> # Unhealthy pipeline: high error, poor coordination
+        >>> # Degraded pipeline: high error, weak context effect
         >>> health = pipeline_health_score(epsilon=0.50, gamma_mean=0.85, observability_coverage=0.75)
         >>> print(f"H = {health:.2f}")  # H ≈ 0.42 (requires attention)
 
@@ -296,8 +324,9 @@ def pipeline_health_score(
 
     Note:
         - Analogous to service-level health scores in distributed systems
-        - The min(1, γ̄) term prevents over-weighting strong coordination
+        - The min(1, γ̄) term prevents over-weighting strong context effects
         - All three factors must be healthy for high overall score
+        - This is an engineering metric, not a measure of intelligence
     """
     if not 0.0 <= observability_coverage <= 1.0:
         raise ValueError(f"Observability coverage must be in [0, 1], got {observability_coverage}")
