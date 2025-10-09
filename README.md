@@ -65,28 +65,27 @@ compare_models("gpt-4o", "grok-3", "gemini-3.5-pro")
 
 ```python
 import asyncio
-from cert.models import ModelRegistry
+import cert
 from cert.providers import OpenAIProvider
 from cert.providers.base import ProviderConfig
+from cert.analysis.semantic import SemanticAnalyzer
+from cert.core.metrics import behavioral_consistency
 
 async def check_agent_consistency():
-    # 1. Select a validated model
-    print("Available models:")
-    for model in ModelRegistry.list_models():
-        print(f"  - {model.model_id}")
+    # 1. Browse and select a validated model
+    cert.print_models()  # Shows all models with baselines
+
+    # Or get detailed info about a specific model
+    cert.get_model_info("gpt-4o")
 
     # 2. Initialize your provider
     config = ProviderConfig(
         api_key="your-api-key",
-        model_name="gpt-4o",  # or any validated model
+        model_name="gpt-4o",
     )
     provider = OpenAIProvider(config)
 
     # 3. Run the measurement
-    from cert.analysis.semantic import SemanticAnalyzer
-    from cert.core.metrics import behavioral_consistency
-
-    # Generate 10 responses to the same prompt
     prompt = "Analyze the key factors in project success"
     responses = []
     for i in range(10):
