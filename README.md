@@ -21,10 +21,35 @@ This is **engineering infrastructure for production monitoring**, not a coordina
 
 ---
 
-## 30-Second Installation
+## Five-Minute Test
+
+**Does it actually work?** Clone and run this:
 
 ```bash
-pip install cert-sdk
+git clone https://github.com/Javihaus/CERT.git
+cd CERT
+pip install -e .
+python quickstart.py
+```
+
+This runs **without API keys** - uses hardcoded baselines from paper validation.
+
+**See:** `quickstart.py` (50 lines), `tests/test_smoke.py` (smoke test), `FIVE_MINUTE_TEST.md` (detailed assessment)
+
+---
+
+## Installation
+
+```bash
+pip install cert-sdk  # When published to PyPI
+```
+
+Or clone from source:
+
+```bash
+git clone https://github.com/Javihaus/CERT.git
+cd CERT
+pip install -e .
 ```
 
 ```python
