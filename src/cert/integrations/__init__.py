@@ -13,10 +13,14 @@ from cert.integrations.base import (
     PipelineMetrics,
 )
 from cert.integrations.langchain import CERTLangChain
+from cert.integrations.crewai import CERTCrewAI
+from cert.integrations.microsoft_agent import CERTMicrosoftAgent
 
 __all__ = [
     "CERTIntegration",
     "AgentExecution",
     "PipelineMetrics",
     "CERTLangChain",
+    "CERTCrewAI",
+    "CERTMicrosoftAgent",
 ]
