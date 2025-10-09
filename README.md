@@ -1,423 +1,555 @@
 # CERT SDK
 
-**Make your multi-agent LLM systems observable and predictable**
+**Will your multi-agent system work in production? Find out in 2 minutes.**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## The Problem
+---
 
-You're building with multiple LLM agents. Your system works... sometimes. You need to answer:
+## 30-Second Demo
 
-- 🤔 **"Is my agent behaving consistently?"**
-- 🔄 **"Do my agents actually coordinate, or just pass messages?"**
-- 📊 **"Will my 5-agent pipeline work in production?"**
-- ⚠️ **"Why did performance suddenly drop?"**
-
-Traditional monitoring (latency, tokens, errors) doesn't answer these questions.
-
-## What CERT Does
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Your Multi-Agent System                                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Agent 1 ──► Agent 2 ──► Agent 3 ──► Final Output          │
-│                                                              │
-│  CERT measures:                                              │
-│  ✓ Consistency: Does Agent 1 behave predictably?           │
-│  ✓ Coordination: Do agents improve each other's output?    │
-│  ✓ Prediction: Will the pipeline work as expected?         │
-│  ✓ Health: Is the system production-ready?                 │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+```python
+pip install cert-sdk
 ```
 
-## Quick Start
+```python
+import cert
 
-### Installation
+# 1. Pick your model
+provider = cert.create_provider(api_key="sk-...", model_name="gpt-4o")
 
+# 2. Run measurements (takes ~2 min)
+results = await cert.measure_agent(provider)
+
+# 3. Get your answer
+# ✓ Consistency: 0.831 (predictable)
+# ✓ Performance: μ=0.638 (validated baseline)
+# ✓ Ready for production
+```
+
+**That's it.** No complex setup. No configuration files. Just answers.
+
+---
+
+## Why You Need This
+
+```mermaid
+graph LR
+    A[Your Multi-Agent System] --> B{Will it work in prod?}
+    B -->|Traditional Tools| C[❌ Latency: 200ms<br/>❌ Tokens: 1.2K<br/>❌ Errors: 0]
+    B -->|CERT| D[✓ Consistency: 0.85<br/>✓ Coordination: 1.4x<br/>✓ Health: 0.88]
+    C --> E[No idea if reliable]
+    D --> F[Deploy with confidence]
+```
+
+**The problem:** Your 3-agent pipeline works locally. Latency is fine. No errors. But will it behave consistently with real users?
+
+**CERT answers:**
+- 📊 **Consistency Score (C)**: Does your agent give the same quality answer twice?
+- 🔄 **Coordination Effect (γ)**: Do agents actually improve each other's work?
+- 💚 **Health Score (H)**: Single number → production ready or not
+
+---
+
+## Framework Integration (Drop-in for Your Stack)
+
+Works with **LangChain**, **CrewAI**, and **AutoGen** - zero refactoring:
+
+### LangChain Example
+
+```python
+from cert.integrations.langchain import CERTLangChain
+
+# Your existing code
+researcher = create_react_agent(model, tools)
+writer = create_react_agent(model, tools)
+
+# Add CERT (3 lines)
+cert_integration = CERTLangChain(provider=cert_provider)
+pipeline = cert_integration.create_multi_agent_pipeline([
+    {"agent": researcher, "agent_id": "researcher", "agent_name": "Researcher"},
+    {"agent": writer, "agent_id": "writer", "agent_name": "Writer"},
+])
+
+# Run and get metrics automatically
+result = pipeline({"messages": [input]})
+cert_integration.print_metrics()
+# ✓ Coordination Effect: γ = 1.52 (52% improvement)
+# ✓ Health Score: 0.89 (production ready)
+```
+
+### CrewAI Example
+
+```python
+from cert.integrations.crewai import CERTCrewAI
+
+# Your existing code
+crew = Crew(agents=[researcher, writer], tasks=[task1, task2])
+
+# Add CERT (2 lines)
+cert_integration = CERTCrewAI(provider=cert_provider)
+instrumented_crew = cert_integration.wrap_crew(crew)
+
+# Metrics collected automatically
+result = instrumented_crew.kickoff()
+cert_integration.print_metrics()
+```
+
+### AutoGen Example
+
+```python
+from cert.integrations.autogen import CERTAutoGen
+
+# Your existing code
+agents = [researcher, writer, critic]
+
+# Add CERT (2 lines)
+cert_integration = CERTAutoGen(provider=cert_provider)
+groupchat = cert_integration.create_instrumented_groupchat(agents, max_round=10)
+
+# Track full conversation
+manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+user_proxy.initiate_chat(manager, message="Your task")
+cert_integration.print_metrics()
+```
+
+**See it in action:** [Real LangChain Pipeline Example](examples/langchain_research_writer_pipeline.ipynb)
+
+---
+
+## What Gets Measured
+
+```mermaid
+graph TD
+    A[User Input] --> B[Agent 1: Researcher]
+    B --> C[Agent 2: Writer]
+    C --> D[Agent 3: Editor]
+    D --> E[Final Output]
+
+    B -.-> F[Quality: 0.65]
+    C -.-> G[Quality: 0.72]
+    D -.-> H[Quality: 0.81]
+
+    F --> I[Coordination Effect<br/>γ = 1.45<br/>45% improvement]
+    G --> I
+    H --> I
+
+    I --> J{Health Score<br/>H = 0.87}
+    J -->|H > 0.8| K[✓ Production Ready]
+    J -->|0.6 < H < 0.8| L[⚠ Deploy with monitoring]
+    J -->|H < 0.6| M[❌ Investigate first]
+```
+
+### 1. Consistency (C) - "Will it do this again?"
+
+| Score | Meaning | Action |
+|-------|---------|--------|
+| **C > 0.85** | ✓ Highly consistent | Ship it |
+| **0.7 - 0.85** | ⚠ Acceptable | Monitor closely |
+| **C < 0.7** | ❌ Unpredictable | Fix prompts or change model |
+
+### 2. Coordination (γ) - "Do agents help or hurt each other?"
+
+| Score | Meaning | Decision |
+|-------|---------|----------|
+| **γ > 1.2** | ✓ Strong synergy | Keep all agents |
+| **γ = 1.0** | = No coordination | Consider simplifying |
+| **γ < 0.9** | ❌ Agents interfere | Remove agents or reorder |
+
+### 3. Health (H) - "Production ready?"
+
+| Score | Status | Action |
+|-------|--------|--------|
+| **H > 0.8** | ✓ Production ready | Deploy normally |
+| **0.6 - 0.8** | ⚠ Acceptable | Deploy with extra monitoring |
+| **H < 0.6** | ❌ Not ready | Investigate before prod |
+
+---
+
+## Validated Models (Compare Before You Choose)
+
+| Model | Provider | Consistency | Best For |
+|-------|----------|-------------|----------|
+| **gemini-3.5-pro** | Google | 0.895 ⭐ | Most predictable |
+| **grok-3** | xAI | 0.863 | Best coordination (γ=1.625) |
+| **gpt-4o** | OpenAI | 0.831 | Most accurate predictions |
+| **gpt-4o-mini** | OpenAI | 0.831 | Cost-effective |
+| **claude-3-5-haiku** | Anthropic | 0.831 | Fastest |
+
+**Quick compare:**
+```python
+cert.print_models()  # See all
+cert.get_model_info("gemini-3.5-pro")  # Details
+from cert.utils.models import compare_models
+compare_models("gpt-4o", "grok-3")  # Side-by-side
+```
+
+---
+
+## Real Use Cases (2 minutes each)
+
+### Use Case 1: "Should I add this reviewer agent?"
+
+**Before:**
+```python
+# Your 2-agent pipeline
+pipeline = [researcher, writer]
+# Output quality: 0.68
+```
+
+**Add CERT:**
+```python
+# Test with reviewer
+pipeline = [researcher, writer, reviewer]
+cert_integration.wrap_and_run(pipeline)
+
+# Result: γ = 1.34 (34% improvement)
+# Decision: Keep the reviewer, it adds value
+```
+
+### Use Case 2: "Which model for production?"
+
+```python
+# Test both
+gpt4_health = await test_with_model("gpt-4o")      # H = 0.82
+gemini_health = await test_with_model("gemini-3.5-pro")  # H = 0.91
+
+# Decision: Use Gemini (higher health + consistency)
+```
+
+### Use Case 3: "Why did performance drop?"
+
+```python
+# Yesterday: C = 0.85, γ = 1.4, H = 0.88
+# Today: C = 0.72, γ = 1.1, H = 0.65
+
+# CERT shows: Consistency dropped
+# Action: Check if model was updated or prompts changed
+```
+
+---
+
+## Installation & Setup
+
+### Install
 ```bash
 pip install cert-sdk
 ```
 
-### Browse Available Models
+### 30-Second Quickstart
 
 ```python
 import cert
 
-# Show all validated models with baselines
-cert.print_models()
+# 1. Create provider
+provider = cert.create_provider(
+    api_key="your-api-key",
+    model_name="gpt-4o"
+)
 
-# Show only OpenAI models
-cert.print_models(provider="openai")
+# 2. Measure (takes ~2 min for n=10 trials)
+results = await cert.measure_agent(provider, n_consistency_trials=10)
 
-# Get detailed info about a specific model
-cert.get_model_info("gpt-4o")
+# 3. Check results
+print(f"Consistency: {results['consistency']:.3f}")
+print(f"Performance: μ={results['mean_performance']:.3f}")
 
-# Compare models side-by-side
-from cert.utils.models import compare_models
-compare_models("gpt-4o", "grok-3", "gemini-3.5-pro")
+# 4. Compare to validated baseline
+baseline = cert.ModelRegistry.get_model("gpt-4o")
+print(f"Baseline: C={baseline.consistency:.3f}, μ={baseline.mean_performance:.3f}")
 ```
 
-### Basic Usage - Measure Your Agent
+### Framework Integration (Choose Your Stack)
+
+<details>
+<summary><b>LangChain/LangGraph</b> (Click to expand)</summary>
 
 ```python
-import asyncio
-import cert
+from cert.integrations.langchain import CERTLangChain
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
 
-async def evaluate_agent():
-    # 1. Browse models (optional)
-    cert.print_models()
+# Create agents
+llm = ChatOpenAI(model="gpt-4o", api_key="...")
+agent1 = create_react_agent(llm, tools=[...])
+agent2 = create_react_agent(llm, tools=[...])
 
-    # 2. Create provider
-    provider = cert.create_provider(
-        api_key="your-api-key",
-        model_name="gpt-4o",
-    )
+# Add CERT
+cert_integration = CERTLangChain(
+    provider=cert.create_provider(api_key="...", model_name="gpt-4o"),
+    verbose=True
+)
 
-    # 3. Measure everything - one function!
-    results = await cert.measure_agent(provider, n_consistency_trials=10)
+# Wrap agents
+pipeline = cert_integration.create_multi_agent_pipeline([
+    {"agent": agent1, "agent_id": "agent1", "agent_name": "Researcher"},
+    {"agent": agent2, "agent_id": "agent2", "agent_name": "Writer"},
+])
 
-    print(f"Consistency: {results['consistency']:.3f}")
-    print(f"Performance: μ={results['mean_performance']:.3f}")
-
-asyncio.run(evaluate_agent())
+# Run with automatic metrics
+result = pipeline({"messages": [{"role": "user", "content": "Your task"}]})
+cert_integration.print_metrics()
 ```
 
-Or measure individually:
+**Full example:** [examples/langchain_research_writer_pipeline.ipynb](examples/langchain_research_writer_pipeline.ipynb)
+
+</details>
+
+<details>
+<summary><b>CrewAI</b> (Click to expand)</summary>
 
 ```python
+from cert.integrations.crewai import CERTCrewAI
+from crewai import Agent, Task, Crew
+
+# Create crew
+researcher = Agent(role="Researcher", goal="...", backstory="...")
+writer = Agent(role="Writer", goal="...", backstory="...")
+task1 = Task(description="...", agent=researcher)
+task2 = Task(description="...", agent=writer)
+crew = Crew(agents=[researcher, writer], tasks=[task1, task2])
+
+# Add CERT
+cert_integration = CERTCrewAI(
+    provider=cert.create_provider(api_key="...", model_name="gpt-4o"),
+    verbose=True
+)
+
+# Wrap and run
+instrumented_crew = cert_integration.wrap_crew(crew)
+result = instrumented_crew.kickoff()
+cert_integration.print_metrics()
+```
+
+</details>
+
+<details>
+<summary><b>AutoGen</b> (Click to expand)</summary>
+
+```python
+from cert.integrations.autogen import CERTAutoGen
+import autogen
+
+# Create agents
+llm_config = {"config_list": [{"model": "gpt-4", "api_key": "..."}]}
+researcher = autogen.AssistantAgent(name="Researcher", llm_config=llm_config)
+writer = autogen.AssistantAgent(name="Writer", llm_config=llm_config)
+user_proxy = autogen.UserProxyAgent(name="User", code_execution_config=False)
+
+# Add CERT
+cert_integration = CERTAutoGen(
+    provider=cert.create_provider(api_key="...", model_name="gpt-4o"),
+    verbose=True
+)
+
+# Create instrumented group chat
+groupchat = cert_integration.create_instrumented_groupchat(
+    agents=[researcher, writer],
+    max_round=10
+)
+
+# Run
+manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
+user_proxy.initiate_chat(manager, message="Your task")
+cert_integration.print_metrics()
+```
+
+</details>
+
+---
+
+## Examples & Tutorials
+
+### Quick Start (2 minutes)
+```bash
+jupyter notebook examples/basic_usage.ipynb
+```
+- Pick a validated model
+- Run measurements
+- See if it's production-ready
+
+### Real Multi-Agent Pipeline (5 minutes)
+```bash
+jupyter notebook examples/langchain_research_writer_pipeline.ipynb
+```
+- 3-agent pipeline (Researcher → Writer → Editor)
+- Automatic coordination tracking
+- Health score calculation
+
+### Custom Domains (10 minutes)
+```bash
+jupyter notebook examples/advanced_usage.ipynb
+```
+- Healthcare, Legal, Finance applications
+- Custom quality scoring
+- Domain-specific baselines
+
+---
+
+## API Reference (What You Actually Need)
+
+### High-Level (Most Common)
+
+```python
+# Measure everything at once
+results = await cert.measure_agent(provider, n_consistency_trials=10)
+# Returns: {'consistency': 0.85, 'mean_performance': 0.70, 'std_performance': 0.05}
+
 # Just consistency
 consistency = await cert.measure_consistency(provider, n_trials=10)
 
 # Just performance
 mu, sigma = await cert.measure_performance(provider)
+
+# Custom domain baseline
+consistency, mu, sigma = await cert.measure_custom_baseline(
+    provider=provider,
+    prompts=your_domain_prompts,
+    domain_keywords=your_keywords
+)
 ```
 
-### Interactive Example
-
-Open the Jupyter notebook:
-
-```bash
-jupyter notebook examples/basic_usage.ipynb
-```
-
-This will:
-1. Show you all validated models with their baselines
-2. Let you pick the model you have access to
-3. Run consistency and performance measurements
-4. Compare your results to known baselines
-
-**Step-by-step walkthrough** with explanations and visualizations.
-
-## Core Concepts
-
-### 1. Consistency - "Does my agent behave predictably?"
-
-```
-Same Prompt ──► Agent ──► Response 1: "Focus on timeline and budget"
-              │         ──► Response 2: "Consider timeline and costs"
-              │         ──► Response 3: "Timeline and budget are key"
-              └─ Consistency Score: 0.89 ✓ (Highly consistent)
-
-Same Prompt ──► Agent ──► Response 1: "Focus on timeline"
-              │         ──► Response 2: "Team dynamics matter most"
-              │         ──► Response 3: "Budget isn't that important"
-              └─ Consistency Score: 0.45 ⚠ (Unpredictable)
-```
-
-**Why it matters**: Inconsistent agents are unpredictable in production.
-
-### 2. Coordination - "Do my agents work together effectively?"
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  Independent: Each agent works alone                     │
-│  Agent 1 output: Quality = 0.60                         │
-│  Agent 2 output: Quality = 0.65                         │
-│  Expected (independent): 0.60 × 0.65 = 0.39            │
-└──────────────────────────────────────────────────────────┘
-                          vs
-┌──────────────────────────────────────────────────────────┐
-│  Coordinated: Agent 2 sees Agent 1's output             │
-│  Pipeline output: Quality = 0.70                        │
-│  Coordination Effect: 0.70 / 0.39 = 1.79 ✓             │
-│  79% improvement from coordination!                      │
-└──────────────────────────────────────────────────────────┘
-```
-
-**Why it matters**: Know if your agents actually help each other or just add latency.
-
-### 3. Pipeline Health - "Is my system production-ready?"
-
-```
-┌─────────────────────────────────────────────────┐
-│  Pipeline Health Score: 0.85 ✓                 │
-│                                                  │
-│  Based on:                                      │
-│  ✓ Prediction accuracy:  95%                   │
-│  ✓ Coordination effect:  1.5x improvement      │
-│  ✓ Observability:        90% instrumented      │
-│                                                  │
-│  Status: PRODUCTION READY                       │
-└─────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────┐
-│  Pipeline Health Score: 0.42 ⚠                 │
-│                                                  │
-│  Based on:                                      │
-│  ⚠ Prediction accuracy:  45%                   │
-│  ⚠ Coordination effect:  0.8x (detrimental!)   │
-│  ✓ Observability:        85% instrumented      │
-│                                                  │
-│  Status: NEEDS INVESTIGATION                    │
-└─────────────────────────────────────────────────┘
-```
-
-**Why it matters**: Single score tells you if your system is ready to deploy.
-
-## Real-World Use Cases
-
-### Use Case 1: Debugging Agent Inconsistency
-
-**Problem**: Your customer service agent gives different answers to the same question.
+### Low-Level (For Custom Calculations)
 
 ```python
-# Measure consistency
-consistency = measure_agent_consistency(agent)
+# Consistency from distances
+consistency = cert.behavioral_consistency(distance_matrix)
 
-# Result: 0.65 (inconsistent)
-# Action: Adjust temperature, improve prompts, or switch models
-```
-
-### Use Case 2: Validating Multi-Agent Pipeline
-
-**Problem**: You added a "reviewer" agent but don't know if it helps.
-
-```python
-# Measure coordination effect
-gamma = measure_coordination(analyst_agent, reviewer_agent)
-
-# Result: γ = 1.4 (40% improvement)
-# Action: Keep the reviewer - it's adding real value
-```
-
-### Use Case 3: Pre-Production Validation
-
-**Problem**: Will your 5-agent pipeline work in production?
-
-```python
-# Calculate pipeline health
-health_score = measure_pipeline_health(your_pipeline)
-
-# Result: H = 0.88
-# Action: Safe to deploy with standard monitoring
-```
-
-### Use Case 4: Choosing Between Models
-
-**Problem**: Should you use GPT-4o or Gemini for your pipeline?
-
-```python
-import cert
-
-# Compare models side-by-side
-from cert.utils.models import compare_models
-compare_models("gpt-4o", "gemini-3.5-pro")
-
-# Or get detailed info
-cert.get_model_info("gemini-3.5-pro")
-
-# Result: Gemini has higher consistency (0.895 vs 0.831)
-# Action: Use Gemini for predictability-critical applications
-```
-
-## Validated Models
-
-The SDK includes pre-measured baselines for these models:
-
-| Model | Provider | Consistency | Performance | Best For |
-|-------|----------|-------------|-------------|----------|
-| `gemini-3.5-pro` | Google | 0.895 ⭐ | 0.831 ⭐ | Highest stability |
-| `grok-3` | xAI | 0.863 | 0.658 | Strong coordination |
-| `gpt-4o` | OpenAI | 0.831 | 0.638 | Best prediction accuracy |
-| `gpt-4o-mini` | OpenAI | 0.831 | 0.638 | Cost-effective |
-| `claude-3-5-haiku-20241022` | Anthropic | 0.831 | 0.595 | Fast and efficient |
-
-### Advanced Features
-
-For models not in the list or domain-specific applications (Healthcare, Legal, Finance):
-
-```bash
-jupyter notebook examples/advanced_usage.ipynb
-```
-
-This interactive notebook guides you through:
-- Measuring baselines for models not in the registry
-- Domain-specific applications (Healthcare, Legal, Finance)
-- Custom quality scoring with domain keywords
-- Registering your custom baselines
-
-## API Overview
-
-### Quick Measurements
-
-```python
-import cert
-
-# Get validated baseline for comparison
-baseline = cert.ModelRegistry.get_model("gpt-4o")
-
-# Measure your agent consistency
-consistency = cert.behavioral_consistency(your_distances)
-print(f"Your agent: {consistency:.3f} vs Baseline: {baseline.consistency:.3f}")
-
-# Measure coordination effect
+# Coordination effect
 gamma = cert.coordination_effect(
     coordinated_performance=0.75,
     independent_performances=[0.60, 0.65]
 )
-print(f"Coordination effect: {gamma:.2f}x")
 
-# Check pipeline health
+# Pipeline health
 health = cert.pipeline_health_score(
-    epsilon=0.15,           # prediction error
-    gamma_mean=1.35,        # coordination effect
-    observability_coverage=0.95  # instrumented fraction
-)
-print(f"Health score: {health:.2f}")
-```
-
-### Working with Providers
-
-```python
-import cert
-
-# Initialize provider - simple and direct!
-provider = cert.create_provider(
-    api_key="your-key",
-    model_name="gpt-4o",
-    temperature=0.7,
-    max_tokens=1024,
-)
-
-# Check if model has validated baseline
-baseline = provider.get_baseline()
-if baseline:
-    print(f"✓ Using validated baseline: C={baseline.consistency}")
-else:
-    print("⚠ Model not validated - measure custom baseline")
-
-# Generate responses (with automatic retry and rate limiting)
-response = await provider.generate_response("Your prompt")
-
-# Batch generation for measurements
-responses = await provider.batch_generate(
-    prompts=["Prompt 1", "Prompt 2"],
-    n_samples=10,  # 10 responses per prompt
+    epsilon=0.15,  # prediction error
+    gamma_mean=1.35,  # coordination effect
+    observability_coverage=0.95
 )
 ```
 
-## Examples
-
-### Basic Usage (Recommended)
-```bash
-jupyter notebook examples/basic_usage.ipynb
-```
-- Interactive model selection
-- Automatic baseline comparison
-- Measures consistency and performance
-- Step-by-step explanations
-- Takes 2-3 minutes
-
-### Advanced Features
-```bash
-jupyter notebook examples/advanced_usage.ipynb
-```
-- Custom model baselines
-- Domain-specific measurements (Healthcare, Legal, Finance)
-- Custom quality scoring with keywords
-- Baseline registration
-- Takes 5-10 minutes
-
-## Architecture Decision Guide
-
-Choose your model based on your needs:
-
-**Need predictability?** → `gemini-3.5-pro` (Highest consistency: 0.895)
-
-**Need strong coordination?** → `grok-3` (Highest γ: 1.625 for 2-agent)
-
-**Need accurate predictions?** → `gpt-4o` (Lowest prediction error: 0.3%)
-
-**Need cost efficiency?** → `gpt-4o-mini` (Same baselines as gpt-4o)
-
-## Common Patterns
-
-### Pattern 1: Validate Before Deploying
+### Model Registry
 
 ```python
-# Before production deployment
-health = measure_pipeline_health(pipeline)
+# Get validated baseline
+baseline = cert.ModelRegistry.get_model("gpt-4o")
+print(f"C={baseline.consistency}, μ={baseline.mean_performance}")
 
-if health > 0.8:
-    deploy_to_production()
-elif health > 0.6:
-    deploy_with_enhanced_monitoring()
-else:
-    investigate_and_fix()
+# List all models
+cert.print_models()
+cert.print_models(provider="openai")  # Filter by provider
+
+# Model details
+cert.get_model_info("gemini-3.5-pro")
+
+# Compare models
+from cert.utils.models import compare_models
+compare_models("gpt-4o", "grok-3", "gemini-3.5-pro")
 ```
 
-### Pattern 2: Monitor Consistency Over Time
+---
+
+## Production Checklist
+
+Before deploying your multi-agent system:
+
+- [ ] **Measure consistency** - Is C > 0.80?
+- [ ] **Check coordination** - Is γ > 1.0 (agents helping)?
+- [ ] **Calculate health** - Is H > 0.80?
+- [ ] **Compare to baseline** - Are you within 10% of validated models?
+- [ ] **Test with real prompts** - Use your actual production prompts
+- [ ] **Monitor over time** - Run CERT measurements weekly
+
+**Deployment decision:**
+- H > 0.80: ✓ Deploy
+- 0.60 < H < 0.80: ⚠ Deploy with extra monitoring
+- H < 0.60: ❌ Investigate first
+
+---
+
+## FAQ
+
+**Q: How long does measurement take?**
+A: ~2 minutes for n=10 trials, ~5 minutes for n=20 (recommended for prod).
+
+**Q: Does it work with my framework?**
+A: Yes - LangChain, CrewAI, AutoGen natively supported. Others work with minimal wrapper.
+
+**Q: Do I need to change my code?**
+A: No. Wrap your existing pipeline with 2-3 lines, metrics collected automatically.
+
+**Q: What if my model isn't in the registry?**
+A: Use `measure_custom_baseline()` - creates your own baseline in 5-10 minutes.
+
+**Q: Can I use this in production monitoring?**
+A: Yes. Run measurements periodically (daily/weekly) to detect drift.
+
+**Q: Does it call my LLM multiple times?**
+A: Yes - consistency needs 10-20 responses. Performance needs 5-10. That's how we measure reliability.
+
+**Q: What's the overhead?**
+A: Minimal. Metrics calculation is ~100ms. LLM calls are the bottleneck (same as your prod system).
+
+---
+
+## Troubleshooting
+
+### Low Consistency (C < 0.7)
 
 ```python
-# Daily consistency check
-consistency_today = measure_consistency(agent)
-if consistency_today < baseline.consistency - 0.1:
-    alert_team("Agent consistency degraded!")
+# Causes:
+# 1. Temperature too high
+provider = cert.create_provider(..., temperature=0.3)  # Try lower
+
+# 2. Non-deterministic model
+# → Switch to more consistent model (see validated models table)
+
+# 3. Ambiguous prompts
+# → Add more specific instructions to your prompt
 ```
 
-### Pattern 3: A/B Test Agent Configurations
+### Poor Coordination (γ < 1.0)
 
 ```python
-# Compare two configurations
-config_a_health = measure_health(pipeline_a)
-config_b_health = measure_health(pipeline_b)
+# Causes:
+# 1. Agents not sharing context
+# → Make sure Agent 2 sees Agent 1's full output
 
-best_config = config_a if config_a_health > config_b_health else config_b
+# 2. Wrong agent order
+# → Try different sequence: [A,B,C] vs [A,C,B]
+
+# 3. Agents interfering
+# → Remove redundant agents or simplify pipeline
 ```
 
-## Development
+### Low Health Score (H < 0.6)
 
-```bash
-git clone https://github.com/Javihaus/CERT.git
-cd CERT
-pip install -e ".[dev]"
+```python
+# Debug:
+results = cert_integration.get_metrics_summary()
+print(results)  # Shows which metric is low
 
-# Run tests
-pytest --cov=cert
-
-# Type checking
-mypy src/cert
-
-# Formatting
-black src/
-ruff check src/
+# If consistency low: See "Low Consistency" above
+# If coordination low: See "Poor Coordination" above
+# If prediction error high: Model drifting from baseline
 ```
 
-## Support
+---
 
-- **Documentation**: Full API docs in `/docs`
-- **Issues**: https://github.com/Javihaus/CERT/issues
-- **Paper**: Based on "CERT: Instrumentation and Metrics for Production LLM Coordination" (Marín, 2025)
+## Support & Resources
 
-## License
+- 📘 **Full Documentation**: [/docs](docs/)
+- 💬 **Issues & Questions**: [GitHub Issues](https://github.com/Javihaus/CERT/issues)
+- 📄 **Research Paper**: "CERT: Instrumentation and Metrics for Production LLM Coordination" (Marín, 2025)
+- 📧 **Contact**: [Create an issue](https://github.com/Javihaus/CERT/issues/new)
 
-MIT License - see [LICENSE](LICENSE) file.
+---
 
 ## Citation
+
+If you use CERT in your research or production systems:
 
 ```bibtex
 @article{marin2025cert,
@@ -430,4 +562,16 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
+## License
+
+MIT License - see [LICENSE](LICENSE)
+
+---
+
+<div align="center">
+
 **Built for engineers shipping multi-agent systems to production.**
+
+[Get Started](#installation--setup) • [Examples](#examples--tutorials) • [API Docs](#api-reference-what-you-actually-need)
+
+</div>
