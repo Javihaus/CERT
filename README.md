@@ -87,8 +87,10 @@ asyncio.run(check_agent_consistency())
 
 ### Interactive Example
 
+Open the Jupyter notebook:
+
 ```bash
-python examples/basic_usage.py
+jupyter notebook examples/basic_usage.ipynb
 ```
 
 This will:
@@ -96,6 +98,8 @@ This will:
 2. Let you pick the model you have access to
 3. Run consistency and performance measurements
 4. Compare your results to known baselines
+
+**Step-by-step walkthrough** with explanations and visualizations.
 
 ## Core Concepts
 
@@ -234,13 +238,14 @@ The SDK includes pre-measured baselines for these models:
 For models not in the list or domain-specific applications (Healthcare, Legal, Finance):
 
 ```bash
-python examples/advanced_usage.py
+jupyter notebook examples/advanced_usage.ipynb
 ```
 
-This will guide you through measuring custom baselines for:
-- Models not in the registry
+This interactive notebook guides you through:
+- Measuring baselines for models not in the registry
 - Domain-specific applications (Healthcare, Legal, Finance)
-- Custom evaluation criteria
+- Custom quality scoring with domain keywords
+- Registering your custom baselines
 
 ## API Overview
 
@@ -311,20 +316,22 @@ responses = await provider.batch_generate(
 
 ### Basic Usage (Recommended)
 ```bash
-python examples/basic_usage.py
+jupyter notebook examples/basic_usage.ipynb
 ```
 - Interactive model selection
 - Automatic baseline comparison
 - Measures consistency and performance
+- Step-by-step explanations
 - Takes 2-3 minutes
 
-### Advanced Usage
+### Advanced Features
 ```bash
-python examples/advanced_usage.py
+jupyter notebook examples/advanced_usage.ipynb
 ```
 - Custom model baselines
-- Domain-specific measurements (Healthcare, Legal)
-- Custom quality scoring
+- Domain-specific measurements (Healthcare, Legal, Finance)
+- Custom quality scoring with keywords
+- Baseline registration
 - Takes 5-10 minutes
 
 ## Architecture Decision Guide
