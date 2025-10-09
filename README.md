@@ -227,10 +227,11 @@ The SDK includes pre-measured baselines for these models:
 | `grok-3` | xAI | 0.863 | 0.658 | Strong coordination |
 | `gpt-4o` | OpenAI | 0.831 | 0.638 | Best prediction accuracy |
 | `gpt-4o-mini` | OpenAI | 0.831 | 0.638 | Cost-effective |
+| `claude-3-5-haiku-20241022` | Anthropic | 0.831 | 0.595 | Fast and efficient |
 
-### Using Other Models
+### Advanced Features
 
-For models not in the list (e.g., `gpt-4-turbo`, `llama-3`, etc.):
+For models not in the list or domain-specific applications (Healthcare, Legal, Finance):
 
 ```bash
 python examples/advanced_usage.py
