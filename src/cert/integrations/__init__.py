@@ -4,7 +4,7 @@ Framework integrations for CERT SDK.
 This module provides integrations with popular multi-agent frameworks:
 - LangChain/LangGraph
 - CrewAI
-- Microsoft Agent Framework
+- AutoGen
 """
 
 from cert.integrations.base import (
@@ -14,7 +14,7 @@ from cert.integrations.base import (
 )
 from cert.integrations.langchain import CERTLangChain
 from cert.integrations.crewai import CERTCrewAI
-from cert.integrations.microsoft_agent import CERTMicrosoftAgent
+from cert.integrations.autogen import CERTAutoGen
 
 __all__ = [
     "CERTIntegration",
@@ -22,5 +22,5 @@ __all__ = [
     "PipelineMetrics",
     "CERTLangChain",
     "CERTCrewAI",
-    "CERTMicrosoftAgent",
+    "CERTAutoGen",
 ]
