@@ -1,30 +1,38 @@
 # CERT SDK
 
-**Production Observability for Multi-Agent LLM Systems**
+**Make your multi-agent LLM systems observable and predictable**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-ready Python SDK implementing the CERT (Coordination Error and Risk Tracking) observability framework for multi-agent LLM coordination pipelines.
+## The Problem
 
-## Overview
+You're building with multiple LLM agents. Your system works... sometimes. You need to answer:
 
-CERT provides systematic observability infrastructure that enables:
+- 🤔 **"Is my agent behaving consistently?"**
+- 🔄 **"Do my agents actually coordinate, or just pass messages?"**
+- 📊 **"Will my 5-agent pipeline work in production?"**
+- ⚠️ **"Why did performance suddenly drop?"**
 
-- **Behavioral Measurement**: Quantify individual agent consistency and performance
-- **Interaction Visibility**: Measure coordination effects in multi-agent pipelines
-- **Performance Predictability**: Forecast pipeline behavior and detect degradation
+Traditional monitoring (latency, tokens, errors) doesn't answer these questions.
 
-Based on cross-architecture validation across multiple LLM providers, documented in the paper ["CERT: Instrumentation and Metrics for Production LLM Coordination"](https://jmarin.info).
+## What CERT Does
 
-## Key Features
-
-- 🎯 **Five Core Metrics**: Behavioral consistency, coordination effect, prediction error, observability coverage, pipeline health
-- 🔄 **Multi-Provider Support**: OpenAI, Anthropic, Google, xAI integrations
-- 📊 **Real-time Monitoring**: Streamlit dashboard with historical trends
-- 🔬 **Statistical Validation**: Welch's t-test and Cohen's d for significance testing
-- 📈 **Production-Ready**: Retry logic, rate limiting, comprehensive error handling
-- 🎨 **Quality Scoring**: Multidimensional response evaluation (semantic, coherence, density)
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Your Multi-Agent System                                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Agent 1 ──► Agent 2 ──► Agent 3 ──► Final Output          │
+│                                                              │
+│  CERT measures:                                              │
+│  ✓ Consistency: Does Agent 1 behave predictably?           │
+│  ✓ Coordination: Do agents improve each other's output?    │
+│  ✓ Prediction: Will the pipeline work as expected?         │
+│  ✓ Health: Is the system production-ready?                 │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
 
@@ -34,260 +42,366 @@ Based on cross-architecture validation across multiple LLM providers, documented
 pip install cert-sdk
 ```
 
-### Basic Usage
+### Basic Usage - Check Your Agent's Consistency
 
 ```python
-from cert import CERTMonitor
+import asyncio
+from cert.models import ModelRegistry
 from cert.providers import OpenAIProvider
-import numpy as np
+from cert.providers.base import ProviderConfig
 
-# Initialize monitor
-monitor = CERTMonitor()
+async def check_agent_consistency():
+    # 1. Select a validated model
+    print("Available models:")
+    for model in ModelRegistry.list_models():
+        print(f"  - {model.model_id}")
 
-# Add providers
-monitor.add_provider(OpenAIProvider(api_key="your-api-key"))
+    # 2. Initialize your provider
+    config = ProviderConfig(
+        api_key="your-api-key",
+        model_name="gpt-4o",  # or any validated model
+    )
+    provider = OpenAIProvider(config)
 
-# Measure single agent behavioral consistency
-consistency = await monitor.measure_consistency(
-    "gpt-4",
-    prompt="Analyze the key factors in business strategy",
-    n_trials=20
-)
-print(f"Behavioral Consistency C = {consistency:.3f}")
+    # 3. Run the measurement
+    from cert.analysis.semantic import SemanticAnalyzer
+    from cert.core.metrics import behavioral_consistency
 
-# Measure two-agent coordination
-pipeline = monitor.create_pipeline(["model-1", "model-2"])
-metrics = await monitor.evaluate_pipeline(
-    pipeline,
-    task="Develop a comprehensive digital transformation strategy"
-)
+    # Generate 10 responses to the same prompt
+    prompt = "Analyze the key factors in project success"
+    responses = []
+    for i in range(10):
+        response = await provider.generate_response(prompt)
+        responses.append(response)
 
-print(f"Coordination Effect γ = {metrics.gamma:.3f}")
-print(f"Pipeline Health H = {metrics.health_score:.3f}")
+    # Calculate consistency
+    analyzer = SemanticAnalyzer()
+    distances = analyzer.pairwise_distances(responses)
+    consistency = behavioral_consistency(distances)
+
+    print(f"Consistency Score: {consistency:.3f}")
+    print(f"✓ Good" if consistency > 0.8 else "⚠ Needs attention")
+
+asyncio.run(check_agent_consistency())
 ```
 
-### Direct Metric Calculation
+### Interactive Example
+
+```bash
+python examples/basic_usage.py
+```
+
+This will:
+1. Show you all validated models with their baselines
+2. Let you pick the model you have access to
+3. Run consistency and performance measurements
+4. Compare your results to known baselines
+
+## Core Concepts
+
+### 1. Consistency - "Does my agent behave predictably?"
+
+```
+Same Prompt ──► Agent ──► Response 1: "Focus on timeline and budget"
+              │         ──► Response 2: "Consider timeline and costs"
+              │         ──► Response 3: "Timeline and budget are key"
+              └─ Consistency Score: 0.89 ✓ (Highly consistent)
+
+Same Prompt ──► Agent ──► Response 1: "Focus on timeline"
+              │         ──► Response 2: "Team dynamics matter most"
+              │         ──► Response 3: "Budget isn't that important"
+              └─ Consistency Score: 0.45 ⚠ (Unpredictable)
+```
+
+**Why it matters**: Inconsistent agents are unpredictable in production.
+
+### 2. Coordination - "Do my agents work together effectively?"
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  Independent: Each agent works alone                     │
+│  Agent 1 output: Quality = 0.60                         │
+│  Agent 2 output: Quality = 0.65                         │
+│  Expected (independent): 0.60 × 0.65 = 0.39            │
+└──────────────────────────────────────────────────────────┘
+                          vs
+┌──────────────────────────────────────────────────────────┐
+│  Coordinated: Agent 2 sees Agent 1's output             │
+│  Pipeline output: Quality = 0.70                        │
+│  Coordination Effect: 0.70 / 0.39 = 1.79 ✓             │
+│  79% improvement from coordination!                      │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Why it matters**: Know if your agents actually help each other or just add latency.
+
+### 3. Pipeline Health - "Is my system production-ready?"
+
+```
+┌─────────────────────────────────────────────────┐
+│  Pipeline Health Score: 0.85 ✓                 │
+│                                                  │
+│  Based on:                                      │
+│  ✓ Prediction accuracy:  95%                   │
+│  ✓ Coordination effect:  1.5x improvement      │
+│  ✓ Observability:        90% instrumented      │
+│                                                  │
+│  Status: PRODUCTION READY                       │
+└─────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────┐
+│  Pipeline Health Score: 0.42 ⚠                 │
+│                                                  │
+│  Based on:                                      │
+│  ⚠ Prediction accuracy:  45%                   │
+│  ⚠ Coordination effect:  0.8x (detrimental!)   │
+│  ✓ Observability:        85% instrumented      │
+│                                                  │
+│  Status: NEEDS INVESTIGATION                    │
+└─────────────────────────────────────────────────┘
+```
+
+**Why it matters**: Single score tells you if your system is ready to deploy.
+
+## Real-World Use Cases
+
+### Use Case 1: Debugging Agent Inconsistency
+
+**Problem**: Your customer service agent gives different answers to the same question.
 
 ```python
+# Measure consistency
+consistency = measure_agent_consistency(agent)
+
+# Result: 0.65 (inconsistent)
+# Action: Adjust temperature, improve prompts, or switch models
+```
+
+### Use Case 2: Validating Multi-Agent Pipeline
+
+**Problem**: You added a "reviewer" agent but don't know if it helps.
+
+```python
+# Measure coordination effect
+gamma = measure_coordination(analyst_agent, reviewer_agent)
+
+# Result: γ = 1.4 (40% improvement)
+# Action: Keep the reviewer - it's adding real value
+```
+
+### Use Case 3: Pre-Production Validation
+
+**Problem**: Will your 5-agent pipeline work in production?
+
+```python
+# Calculate pipeline health
+health_score = measure_pipeline_health(your_pipeline)
+
+# Result: H = 0.88
+# Action: Safe to deploy with standard monitoring
+```
+
+### Use Case 4: Choosing Between Models
+
+**Problem**: Should you use GPT-4o or Gemini for your pipeline?
+
+```python
+# Check validated baselines
+gpt4o = ModelRegistry.get_model("gpt-4o")
+gemini = ModelRegistry.get_model("gemini-3.5-pro")
+
+print(f"GPT-4o:  Consistency={gpt4o.consistency}, Performance={gpt4o.mean_performance}")
+print(f"Gemini:  Consistency={gemini.consistency}, Performance={gemini.mean_performance}")
+
+# Result: Gemini has higher consistency (0.895 vs 0.831)
+# Action: Use Gemini for predictability-critical applications
+```
+
+## Validated Models
+
+The SDK includes pre-measured baselines for these models:
+
+| Model | Provider | Consistency | Performance | Best For |
+|-------|----------|-------------|-------------|----------|
+| `gemini-3.5-pro` | Google | 0.895 ⭐ | 0.831 ⭐ | Highest stability |
+| `grok-3` | xAI | 0.863 | 0.658 | Strong coordination |
+| `gpt-4o` | OpenAI | 0.831 | 0.638 | Best prediction accuracy |
+| `gpt-4o-mini` | OpenAI | 0.831 | 0.638 | Cost-effective |
+
+### Using Other Models
+
+For models not in the list (e.g., `gpt-4-turbo`, `llama-3`, etc.):
+
+```bash
+python examples/advanced_usage.py
+```
+
+This will guide you through measuring custom baselines for:
+- Models not in the registry
+- Domain-specific applications (Healthcare, Legal, Finance)
+- Custom evaluation criteria
+
+## API Overview
+
+### Quick Measurements
+
+```python
+from cert.models import ModelRegistry
 from cert.core.metrics import (
     behavioral_consistency,
     coordination_effect,
     pipeline_health_score,
 )
-from cert.analysis.semantic import SemanticAnalyzer
 
-# Measure behavioral consistency from responses
-analyzer = SemanticAnalyzer()
-responses = [
-    "Response 1 to the same prompt...",
-    "Response 2 to the same prompt...",
-    "Response 3 to the same prompt...",
-]
+# Get validated baseline for comparison
+baseline = ModelRegistry.get_model("gpt-4o")
 
-distances = analyzer.pairwise_distances(responses)
-consistency = behavioral_consistency(distances)
-print(f"C = {consistency:.3f}")
+# Measure your agent
+consistency = behavioral_consistency(your_distances)
+print(f"Your agent: {consistency:.3f} vs Baseline: {baseline.consistency:.3f}")
 
-# Calculate coordination effect
+# Measure coordination
 gamma = coordination_effect(
     coordinated_performance=0.75,
     independent_performances=[0.60, 0.65]
 )
-print(f"γ = {gamma:.3f}")  # γ > 1 indicates synergistic coordination
+print(f"Coordination effect: {gamma:.2f}x")
 
-# Compute pipeline health
+# Check pipeline health
 health = pipeline_health_score(
-    epsilon=0.15,  # prediction error
-    gamma_mean=1.35,  # coordination effect
+    epsilon=0.15,           # prediction error
+    gamma_mean=1.35,        # coordination effect
     observability_coverage=0.95  # instrumented fraction
 )
-print(f"H = {health:.2f}")  # H > 0.8 indicates healthy pipeline
+print(f"Health score: {health:.2f}")
 ```
 
-## Core CERT Metrics
+### Working with Providers
 
-### 1. Behavioral Consistency C(Ai, p)
+```python
+from cert.providers import OpenAIProvider, GoogleProvider
+from cert.providers.base import ProviderConfig
 
-Measures how consistently an agent responds to identical input using semantic distance variability.
+# Initialize any provider
+config = ProviderConfig(
+    api_key="your-key",
+    model_name="gpt-4o",
+)
+provider = OpenAIProvider(config)
 
-**Formula (Equation 1)**:
-$$C(A_i, p) = 1 - \frac{\text{Std}\{d(r_j, r_k)\}}{\text{Mean}\{d(r_j, r_k)\}}$$
+# Check if model has validated baseline
+baseline = provider.get_baseline()
+if baseline:
+    print(f"✓ Using validated baseline: C={baseline.consistency}")
+else:
+    print("⚠ Model not validated - measure custom baseline")
 
-**Interpretation**:
-- **C → 1**: Stable, predictable behavior
-- **C < 0.7**: High variability, requires enhanced monitoring
+# Generate responses (with automatic retry and rate limiting)
+response = await provider.generate_response("Your prompt")
 
-**Baseline Values from Paper (Table 1)**:
+# Batch generation for measurements
+responses = await provider.batch_generate(
+    prompts=["Prompt 1", "Prompt 2"],
+    n_samples=10,  # 10 responses per prompt
+)
+```
 
-| Architecture | C     |
-|--------------|-------|
-| Gemini 3.5   | 0.895 |
-| Grok 3       | 0.863 |
-| Claude 3/3.5 | 0.831 |
-| GPT-4        | 0.831 |
+## Examples
 
-### 2. Coordination Effect γ
-
-Measures whether multi-agent coordination produces synergistic or detrimental effects.
-
-**Formula (Equation 3)**:
-$$\gamma^P_{i,j}(t) = \frac{\mathbb{E}[P^{\text{coordinated}}_{ij}(t)]}{\mathbb{E}[P^{\text{independent}}_i(t)] \cdot \mathbb{E}[P^{\text{independent}}_j(t)]}$$
-
-**Interpretation**:
-- **γ > 1**: Synergistic coordination
-- **γ = 1**: No coordination effect
-- **γ < 1**: Detrimental interaction
-
-**Two-Agent Baselines from Paper (Table 2)**:
-
-| Architecture | γ     | Statistical Significance |
-|--------------|-------|--------------------------|
-| Model B      | 1.625 | p < 0.001, d > 0.9       |
-| GPT-4        | 1.562 | p < 0.001, d > 0.9       |
-| Model A      | 1.462 | p < 0.001, d > 0.9       |
-| Gemini 3.5   | 1.137 | p = 0.008, d ≈ 0.66      |
-
-### 3. Pipeline Health Score Hcoord
-
-Composite metric integrating prediction accuracy, coordination strength, and observability coverage.
-
-**Formula (Equation 7)**:
-$$H_{\text{coord}}(t) = \frac{1}{1 + \epsilon_{\text{pred}}(t)} \times \min(1, \bar{\gamma}(t)) \times C_{\text{obs}}(t)$$
-
-**Operational Thresholds**:
-- **H > 0.8**: Healthy pipeline, standard monitoring
-- **0.6 < H ≤ 0.8**: Acceptable, monitor for degradation
-- **0.4 < H ≤ 0.6**: Degraded, investigate issues
-- **H ≤ 0.4**: Critical, immediate attention required
-
-### 4. Performance Variability Ω
-
-Quantifies behavioral range relative to baseline predictions.
-
-**Operational Interpretation (Table 5)**:
-
-| Architecture | Ω     | Interpretation             |
-|--------------|-------|----------------------------|
-| Gemini       | 1.729 | Low variability, stable    |
-| Model B      | 2.163 | Moderate variability       |
-| GPT-4        | 2.320 | Moderate variability       |
-| Model A      | 2.852 | High variability, monitor  |
-
-## Architecture Support Matrix
-
-| Provider  | Models            | Baseline Available | Status      |
-|-----------|-------------------|--------------------|-------------|
-| Provider A | Model Family A   | ✅ (C=0.831)       | ✅ Ready    |
-| OpenAI    | GPT-4, GPT-4o     | ✅ (C=0.831)       | ✅ Ready    |
-| Provider B | Model Family B   | ✅ (C=0.863)       | ✅ Ready    |
-| Google    | Gemini 3.5        | ✅ (C=0.895)       | ✅ Ready    |
-
-## Real-Time Monitoring Dashboard
-
-Launch the Streamlit dashboard for live metrics visualization:
-
+### Basic Usage (Recommended)
 ```bash
-cert-dashboard --config my_pipeline.yaml
+python examples/basic_usage.py
+```
+- Interactive model selection
+- Automatic baseline comparison
+- Measures consistency and performance
+- Takes 2-3 minutes
+
+### Advanced Usage
+```bash
+python examples/advanced_usage.py
+```
+- Custom model baselines
+- Domain-specific measurements (Healthcare, Legal)
+- Custom quality scoring
+- Takes 5-10 minutes
+
+## Architecture Decision Guide
+
+Choose your model based on your needs:
+
+**Need predictability?** → `gemini-3.5-pro` (Highest consistency: 0.895)
+
+**Need strong coordination?** → `grok-3` (Highest γ: 1.625 for 2-agent)
+
+**Need accurate predictions?** → `gpt-4o` (Lowest prediction error: 0.3%)
+
+**Need cost efficiency?** → `gpt-4o-mini` (Same baselines as gpt-4o)
+
+## Common Patterns
+
+### Pattern 1: Validate Before Deploying
+
+```python
+# Before production deployment
+health = measure_pipeline_health(pipeline)
+
+if health > 0.8:
+    deploy_to_production()
+elif health > 0.6:
+    deploy_with_enhanced_monitoring()
+else:
+    investigate_and_fix()
 ```
 
-Features:
-- Live metric values (C, γ, ε, Cobs, Hcoord)
-- Historical trends with moving averages
-- Cross-architecture comparison charts
-- Alert thresholds based on paper's validation
-- Export functionality for production logs
+### Pattern 2: Monitor Consistency Over Time
 
-## Production Deployment
+```python
+# Daily consistency check
+consistency_today = measure_consistency(agent)
+if consistency_today < baseline.consistency - 0.1:
+    alert_team("Agent consistency degraded!")
+```
 
-### Metric Interpretation Thresholds
+### Pattern 3: A/B Test Agent Configurations
 
-Based on cross-architecture validation (Table 6):
+```python
+# Compare two configurations
+config_a_health = measure_health(pipeline_a)
+config_b_health = measure_health(pipeline_b)
 
-| Metric               | CV    | Generalization | Interpretation                        |
-|----------------------|-------|----------------|---------------------------------------|
-| Consistency (C)      | 3.1%  | Excellent      | Stable behavioral measurement         |
-| Coordination (γ)     | 13.0% | Moderate       | Architecture-dependent effects        |
-| Observability (Cobs) | 0.7%  | Excellent      | Consistent instrumentation            |
-| Prediction (ε)       | 42-67%| Poor           | Requires architecture-specific tuning |
-| Health (Hcoord)      | 7.8%  | Good           | Actionable aggregated metric          |
-
-### Architecture Selection Criteria (Section 6.4)
-
-**For predictable worst-case performance**:
-- Choose: Gemini (Ω=1.729) or GPT-4 (Ω=2.320)
-- Accept: Weaker coordination gains (γ=1.137-0.997)
-
-**For strong multi-agent enrichment**:
-- Choose: Model A (γ=1.462) or Model B (γ=1.625)
-- Accept: Higher prediction uncertainty (ε=19.8-14.0%)
-
-**For balanced deployments**:
-- GPT-4: Exceptional prediction accuracy (ε=0.3%) + moderate coordination
-- Gemini: High baseline (μ=0.831) + stable execution (Ω=1.729)
+best_config = config_a if config_a_health > config_b_health else config_b
+```
 
 ## Development
-
-### Setup Development Environment
 
 ```bash
 git clone https://github.com/Javihaus/CERT.git
 cd CERT
 pip install -e ".[dev]"
-```
 
-### Run Tests
-
-```bash
-# Unit tests with coverage
-pytest --cov=cert --cov-report=html
-
-# Integration tests
-pytest tests/integration/
+# Run tests
+pytest --cov=cert
 
 # Type checking
 mypy src/cert
 
-# Linting
+# Formatting
+black src/
 ruff check src/
-black --check src/
 ```
 
-## API Documentation
+## Support
 
-Full API documentation available at [cert-sdk.readthedocs.io](https://cert-sdk.readthedocs.io).
+- **Documentation**: Full API docs in `/docs`
+- **Issues**: https://github.com/Javihaus/CERT/issues
+- **Paper**: Based on "CERT: Instrumentation and Metrics for Production LLM Coordination" (Marín, 2025)
 
-### Key Modules
+## License
 
-- **`cert.core.metrics`**: Core CERT metric calculations
-- **`cert.providers`**: LLM provider integrations
-- **`cert.analysis.semantic`**: Semantic similarity analysis
-- **`cert.analysis.quality`**: Response quality scoring (Equation 8)
-- **`cert.analysis.statistics`**: Statistical validation utilities
-- **`cert.monitoring`**: Real-time dashboard and exporters
-
-## Performance Baselines
-
-### Single-Agent Baseline (Table 1)
-
-| Architecture | C     | μ (mean) | σ (std) |
-|--------------|-------|----------|---------|
-| Model A      | 0.831 | 0.595    | 0.075   |
-| GPT-4        | 0.831 | 0.638    | 0.069   |
-| Model B      | 0.863 | 0.658    | 0.062   |
-| Gemini 3.5   | 0.895 | 0.831    | 0.090   |
-
-### Five-Agent Pipeline Health (Table 4)
-
-| Rank | Architecture | Hcoord | Primary Driver                              |
-|------|--------------|--------|---------------------------------------------|
-| 1    | GPT-4        | 0.89   | Exceptional prediction accuracy (ε=0.3%)    |
-| 2    | Gemini       | 0.81   | High baseline + moderate prediction         |
-| 3    | Model B      | 0.75   | Positive deviation from baseline            |
-| 4    | Model A      | 0.73   | Largest positive deviation                  |
+MIT License - see [LICENSE](LICENSE) file.
 
 ## Citation
-
-If you use this SDK in your research, please cite the paper:
 
 ```bibtex
 @article{marin2025cert,
@@ -298,24 +412,6 @@ If you use this SDK in your research, please cite the paper:
 }
 ```
 
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## Support
-
-- **Documentation**: https://cert-sdk.readthedocs.io
-- **Issues**: https://github.com/Javihaus/CERT/issues
-- **Paper**: https://jmarin.info/cert
-
-## Acknowledgments
-
-This SDK implements the CERT observability framework as described in "CERT: Instrumentation and Metrics for Production LLM Coordination" (Marín, 2025). Cross-architecture validation was conducted on multiple transformer-based LLM providers.
-
 ---
 
-**Built with production reliability in mind** • Not claiming coordination breakthroughs, just making systems more deployable and debuggable.
+**Built for engineers shipping multi-agent systems to production.**
