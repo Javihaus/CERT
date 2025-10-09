@@ -5,7 +5,7 @@ These functions provide simple, one-line interfaces to measure
 agent consistency, performance, and coordination effects.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Set, List
 from cert.providers.base import ProviderInterface
 from cert.models import ModelBaseline
 from cert.analysis.semantic import SemanticAnalyzer
@@ -251,3 +251,128 @@ async def measure_agent(
         "mean_performance": mu,
         "std_performance": sigma,
     }
+
+
+async def measure_custom_baseline(
+    provider: ProviderInterface,
+    prompts: List[str],
+    n_consistency_trials: int = 20,
+    domain_keywords: Optional[Set[str]] = None,
+    verbose: bool = True,
+) -> Tuple[float, float, float]:
+    """
+    Measure custom baseline for domain-specific applications.
+
+    This function is for advanced use cases where you need custom
+    prompts and domain-specific quality scoring (e.g., Healthcare,
+    Legal, Finance).
+
+    Args:
+        provider: Initialized provider instance.
+        prompts: List of domain-specific prompts for your use case.
+        n_consistency_trials: Number of trials for consistency (default: 20).
+        domain_keywords: Set of domain-specific keywords for quality scoring.
+        verbose: Print progress and results (default: True).
+
+    Returns:
+        Tuple of (consistency, mean_performance, std_performance).
+
+    Example:
+        >>> import cert
+        >>> provider = cert.create_provider(api_key="...", model_name="gpt-4-turbo")
+        >>>
+        >>> healthcare_prompts = [
+        ...     "Analyze patient care quality improvement factors.",
+        ...     "Evaluate clinical decision support systems.",
+        ...     # ... more prompts
+        ... ]
+        >>>
+        >>> healthcare_keywords = {
+        ...     "patient", "clinical", "diagnosis", "treatment",
+        ...     "healthcare", "medical", "protocol", "safety"
+        ... }
+        >>>
+        >>> c, mu, sigma = await cert.measure_custom_baseline(
+        ...     provider=provider,
+        ...     prompts=healthcare_prompts,
+        ...     domain_keywords=healthcare_keywords,
+        ... )
+    """
+    if verbose:
+        print("\n" + "="*70)
+        print("Custom Domain Baseline Measurement")
+        print("="*70)
+        print(f"\nModel: {provider.config.model_name}")
+        print(f"Consistency trials: {n_consistency_trials}")
+        print(f"Performance prompts: {len(prompts)}")
+        if domain_keywords:
+            print(f"Domain keywords: {len(domain_keywords)}")
+
+    # Step 1: Measure Behavioral Consistency
+    if verbose:
+        print("\n[1/2] Measuring behavioral consistency...")
+
+    consistency_prompt = prompts[0]  # Use first prompt
+    responses = []
+
+    for i in range(n_consistency_trials):
+        response = await provider.generate_response(
+            prompt=consistency_prompt,
+            temperature=0.7,
+        )
+        responses.append(response)
+        if verbose and (i + 1) % 5 == 0:
+            print(f"    Progress: {i+1}/{n_consistency_trials}")
+
+    # Calculate consistency
+    analyzer = SemanticAnalyzer()
+    distances = analyzer.pairwise_distances(responses)
+    consistency = behavioral_consistency(distances)
+
+    if verbose:
+        print(f"  ✓ Behavioral Consistency: C = {consistency:.3f}")
+
+    # Step 2: Measure Performance Distribution
+    if verbose:
+        print("\n[2/2] Measuring performance distribution...")
+
+    # Create custom scorer if domain keywords provided
+    if domain_keywords:
+        scorer = QualityScorer(domain_keywords=domain_keywords)
+        if verbose:
+            print(f"  Using {len(domain_keywords)} domain-specific keywords")
+    else:
+        scorer = QualityScorer()
+        if verbose:
+            print(f"  Using default analytical keywords")
+
+    quality_scores = []
+    for i, prompt in enumerate(prompts):
+        response = await provider.generate_response(
+            prompt=prompt,
+            temperature=0.7,
+        )
+
+        components = scorer.score(prompt, response)
+        quality_scores.append(components.composite_score)
+
+        if verbose:
+            print(f"    Prompt {i+1}/{len(prompts)}: Q = {components.composite_score:.3f}")
+
+    # Calculate distribution
+    mu, sigma = empirical_performance_distribution(np.array(quality_scores))
+
+    if verbose:
+        print(f"  ✓ Performance: μ = {mu:.3f}, σ = {sigma:.3f}")
+
+    # Summary
+    if verbose:
+        print("\n" + "="*70)
+        print("Custom Baseline Results")
+        print("="*70)
+        print(f"Consistency:   C = {consistency:.3f}")
+        print(f"Mean:          μ = {mu:.3f}")
+        print(f"Std Dev:       σ = {sigma:.3f}")
+        print("="*70 + "\n")
+
+    return consistency, mu, sigma
