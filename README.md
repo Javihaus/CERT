@@ -224,12 +224,14 @@ health_score = measure_pipeline_health(your_pipeline)
 **Problem**: Should you use GPT-4o or Gemini for your pipeline?
 
 ```python
-# Check validated baselines
-gpt4o = ModelRegistry.get_model("gpt-4o")
-gemini = ModelRegistry.get_model("gemini-3.5-pro")
+import cert
 
-print(f"GPT-4o:  Consistency={gpt4o.consistency}, Performance={gpt4o.mean_performance}")
-print(f"Gemini:  Consistency={gemini.consistency}, Performance={gemini.mean_performance}")
+# Compare models side-by-side
+from cert.utils.models import compare_models
+compare_models("gpt-4o", "gemini-3.5-pro")
+
+# Or get detailed info
+cert.get_model_info("gemini-3.5-pro")
 
 # Result: Gemini has higher consistency (0.895 vs 0.831)
 # Action: Use Gemini for predictability-critical applications
@@ -266,29 +268,24 @@ This interactive notebook guides you through:
 ### Quick Measurements
 
 ```python
-from cert.models import ModelRegistry
-from cert.core.metrics import (
-    behavioral_consistency,
-    coordination_effect,
-    pipeline_health_score,
-)
+import cert
 
 # Get validated baseline for comparison
-baseline = ModelRegistry.get_model("gpt-4o")
+baseline = cert.ModelRegistry.get_model("gpt-4o")
 
-# Measure your agent
-consistency = behavioral_consistency(your_distances)
+# Measure your agent consistency
+consistency = cert.behavioral_consistency(your_distances)
 print(f"Your agent: {consistency:.3f} vs Baseline: {baseline.consistency:.3f}")
 
-# Measure coordination
-gamma = coordination_effect(
+# Measure coordination effect
+gamma = cert.coordination_effect(
     coordinated_performance=0.75,
     independent_performances=[0.60, 0.65]
 )
 print(f"Coordination effect: {gamma:.2f}x")
 
 # Check pipeline health
-health = pipeline_health_score(
+health = cert.pipeline_health_score(
     epsilon=0.15,           # prediction error
     gamma_mean=1.35,        # coordination effect
     observability_coverage=0.95  # instrumented fraction
@@ -299,15 +296,15 @@ print(f"Health score: {health:.2f}")
 ### Working with Providers
 
 ```python
-from cert.providers import OpenAIProvider, GoogleProvider
-from cert.providers.base import ProviderConfig
+import cert
 
-# Initialize any provider
-config = ProviderConfig(
+# Initialize provider - simple and direct!
+provider = cert.create_provider(
     api_key="your-key",
     model_name="gpt-4o",
+    temperature=0.7,
+    max_tokens=1024,
 )
-provider = OpenAIProvider(config)
 
 # Check if model has validated baseline
 baseline = provider.get_baseline()
