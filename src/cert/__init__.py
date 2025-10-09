@@ -14,6 +14,7 @@ from cert.core.metrics import (
 )
 from cert.models import ModelRegistry, ModelBaseline, get_model_baseline
 from cert.utils import print_models, list_models, get_model_info
+from cert.providers import create_provider
 
 # Note: ObservabilityTracker and Pipeline will be available when implemented
 # from cert.core.observability import ObservabilityTracker
@@ -30,6 +31,7 @@ __all__ = [
     "print_models",
     "list_models",
     "get_model_info",
+    "create_provider",
     # "ObservabilityTracker",
     # "Pipeline",
     # "PipelineConfig",
