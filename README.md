@@ -34,21 +34,93 @@ results = await cert.measure_agent(provider)
 
 ## Why You Need This
 
+### Your Multi-Agent System Today
+
 ```mermaid
-graph LR
-    A[Your Multi-Agent System] --> B{Will it work in prod?}
-    B -->|Traditional Tools| C[❌ Latency: 200ms<br/>❌ Tokens: 1.2K<br/>❌ Errors: 0]
-    B -->|CERT| D[✓ Consistency: 0.85<br/>✓ Coordination: 1.4x<br/>✓ Health: 0.88]
-    C --> E[No idea if reliable]
-    D --> F[Deploy with confidence]
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize':'14px', 'fontFamily':'arial'}}}%%
+graph TB
+    subgraph "Your Production Pipeline"
+        U[User Query:<br/>'Analyze Q3 sales strategy'] --> A1
+
+        A1[Agent 1: Researcher<br/>─────────────<br/>Gathers data & insights]
+        A2[Agent 2: Analyzer<br/>─────────────<br/>Processes information]
+        A3[Agent 3: Writer<br/>─────────────<br/>Creates final report]
+
+        A1 -->|Context + Data| A2
+        A2 -->|Analysis + Findings| A3
+        A3 --> OUT[Final Output<br/>to User]
+    end
+
+    subgraph "Problems You Can't See"
+        P1["❌ Inconsistent Behavior<br/>Same input → different quality"]
+        P2["❌ Poor Coordination<br/>Agents don't improve each other"]
+        P3["❌ Unpredictable Quality<br/>Works in dev, fails in prod"]
+    end
+
+    A1 -.->|"⚠️ Is response<br/>consistent?"| P1
+    A2 -.->|"⚠️ Does analysis<br/>improve output?"| P2
+    A3 -.->|"⚠️ Will quality<br/>hold in prod?"| P3
+
+    style P1 fill:#ff4444,stroke:#cc0000,stroke-width:2px,color:#fff
+    style P2 fill:#ff4444,stroke:#cc0000,stroke-width:2px,color:#fff
+    style P3 fill:#ff4444,stroke:#cc0000,stroke-width:2px,color:#fff
+    style A1 fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
+    style A2 fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
+    style A3 fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
 ```
 
-**The problem:** Your 3-agent pipeline works locally. Latency is fine. No errors. But will it behave consistently with real users?
+### What CERT Measures (At Each Step)
 
-**CERT answers:**
-- 📊 **Consistency Score (C)**: Does your agent give the same quality answer twice?
-- 🔄 **Coordination Effect (γ)**: Do agents actually improve each other's work?
-- 💚 **Health Score (H)**: Single number → production ready or not
+```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize':'14px', 'fontFamily':'arial'}}}%%
+graph TB
+    subgraph "CERT Instrumented Pipeline"
+        U2[User Query] --> A1B
+
+        A1B["Agent 1: Researcher<br/>──────────────────<br/>✓ Consistency: C = 0.82<br/>✓ Quality: Q₁ = 0.65"]
+        A2B["Agent 2: Analyzer<br/>──────────────────<br/>✓ Consistency: C = 0.85<br/>✓ Quality: Q₂ = 0.72"]
+        A3B["Agent 3: Writer<br/>──────────────────<br/>✓ Consistency: C = 0.88<br/>✓ Quality: Q₃ = 0.81"]
+
+        A1B -->|"Measured handoff"| A2B
+        A2B -->|"Measured handoff"| A3B
+        A3B --> OUT2[Final Output]
+
+        A1B -.-> M1["📊 Consistency Check<br/>Same query 10x:<br/>Quality variance = 0.05<br/>Status: ✓ Predictable"]
+
+        A2B -.-> M2["🔄 Coordination Check<br/>Expected: Q₁ × Q₂ = 0.47<br/>Actual: Q₂ = 0.72<br/>γ = 1.53 (53% boost)<br/>Status: ✓ Strong synergy"]
+
+        A3B -.-> M3["💚 Health Check<br/>Pipeline Quality: 0.81<br/>Coordination: γ = 1.45<br/>Prediction Error: 0.08<br/>H = 0.87<br/>Status: ✓ Production Ready"]
+    end
+
+    M1 --> DECISION
+    M2 --> DECISION
+    M3 --> DECISION
+
+    DECISION{Health Score<br/>H = 0.87}
+    DECISION -->|H > 0.80| DEPLOY[✓ Deploy to Production<br/>with confidence]
+
+    style M1 fill:#50C878,stroke:#2d7a4f,stroke-width:2px,color:#fff
+    style M2 fill:#50C878,stroke:#2d7a4f,stroke-width:2px,color:#fff
+    style M3 fill:#50C878,stroke:#2d7a4f,stroke-width:2px,color:#fff
+    style A1B fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
+    style A2B fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
+    style A3B fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
+    style DEPLOY fill:#00aa00,stroke:#008800,stroke-width:3px,color:#fff
+    style DECISION fill:#ffa500,stroke:#cc8400,stroke-width:2px,color:#fff
+```
+
+### The Metrics
+
+| Metric | What It Measures | Why It Matters | Threshold |
+|--------|------------------|----------------|-----------|
+| **Consistency (C)** | Does the agent produce similar quality output for the same input? | Prevents unpredictable behavior in production | **C > 0.80** |
+| **Coordination (γ)** | Do agents improve each other's work, or just add latency? | Validates if your multi-agent architecture adds value | **γ > 1.0** |
+| **Health (H)** | Is the entire pipeline production-ready? | Single go/no-go metric for deployment | **H > 0.80** |
+
+**Traditional monitoring gives you:** Latency ✓, Token count ✓, Errors ✓
+**But can't answer:** Will it behave the same way tomorrow? Do my agents actually help each other?
+
+**CERT gives you:** Quantitative answers to deploy with confidence.
 
 ---
 
