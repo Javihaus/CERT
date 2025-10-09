@@ -34,8 +34,10 @@ class ModelBaseline:
         consistency: Behavioral consistency C from Table 1.
         mean_performance: Mean baseline performance μ from Table 1.
         std_performance: Standard deviation σ from Table 1.
-        coordination_2agent: Two-agent coordination effect γ from Table 2 (optional).
-        coordination_5agent: Five-agent coordination effect γ from Table 3 (optional).
+        coordination_2agent: Context propagation effect γ for 2-model pipelines from Table 2 (optional).
+                           Field name retained for API compatibility.
+        coordination_5agent: Context propagation effect γ for 5-model pipelines from Table 3 (optional).
+                           Field name retained for API compatibility.
         paper_section: Reference to paper section/table.
         validation_date: When baseline was measured (YYYY-MM format).
     """
@@ -254,8 +256,8 @@ class ModelRegistry:
             consistency: Measured behavioral consistency C.
             mean_performance: Measured mean performance μ.
             std_performance: Measured standard deviation σ.
-            coordination_2agent: Optional two-agent coordination γ.
-            coordination_5agent: Optional five-agent coordination γ.
+            coordination_2agent: Optional context propagation effect γ for 2-model pipelines.
+            coordination_5agent: Optional context propagation effect γ for 5-model pipelines.
 
         Returns:
             The registered ModelBaseline.

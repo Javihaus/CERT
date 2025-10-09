@@ -1,23 +1,23 @@
 # CERT SDK
 
-**Observability infrastructure for multi-agent LLM pipelines**
+**Observability infrastructure for multi-model LLM sequential processing**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-CERT provides monitoring and debugging tools for production deployments of sequential LLM pipelines. It measures statistical variance in model outputs and quantifies performance changes when models process information sequentially.
+CERT provides monitoring and debugging tools for production deployments of sequential LLM pipelines. It measures statistical variance in model outputs and quantifies performance changes when models process accumulated context in sequential configurations.
 
 ---
 
 ## What CERT Does
 
-CERT instruments multi-agent LLM systems to measure:
+CERT instruments multi-model LLM systems to measure:
 
 1. **Behavioral Consistency (C)**: Statistical variance in output quality for identical inputs
-2. **Sequential Performance Effect (γ)**: Performance changes when agents see accumulated context
+2. **Context Propagation Effect (γ)**: Performance changes when models process accumulated context
 3. **Pipeline Health (H)**: Composite operational metric for deployment decisions
 
-This is **engineering infrastructure for production monitoring**, not a coordination framework or intelligence system.
+This is **engineering infrastructure for production monitoring**, not a coordination framework or intelligence system. It measures how attention mechanisms process extended context, not agent collaboration or coordination principles.
 
 ---
 
@@ -162,18 +162,20 @@ graph TB
 ### What These Actually Measure
 
 - **C**: How much output quality varies for the same input (token generation variance)
-- **γ**: Whether performance improves when agents see more context (attention mechanism effects)
+- **γ**: Whether performance improves when models process accumulated context (attention mechanism effects)
 - **H**: Combined metric for go/no-go deployment decisions
 
-**What this is NOT:**
-- ❌ Not measuring "agent intelligence" or "emergent behaviors"
-- ❌ Not detecting genuine coordination or collaboration
-- ❌ Not revealing why sequential context helps (just that it does)
-
-**What it IS:**
+**What this measures:**
 - ✅ Statistical characterization of output variance
-- ✅ Measurement of sequential context accumulation effects
-- ✅ Operational metrics for production deployment decisions
+- ✅ Performance changes from sequential context accumulation
+- ✅ Operational metrics for architecture selection
+- ✅ How attention mechanisms behave with extended context
+
+**What this does NOT measure:**
+- ❌ Agent intelligence, coordination, or collaboration
+- ❌ "Emergent behaviors" or coordination principles
+- ❌ WHY context helps (black box measurement)
+- ❌ Reasoning capabilities or planning
 
 ---
 
@@ -335,14 +337,15 @@ def behavioral_consistency(semantic_distances):
     return 1.0 - (std / mean)
 ```
 
-### Sequential Context Effect (Equation 3)
+### Context Propagation Effect (Equation 3)
 
 ```python
 def coordination_effect(coordinated_perf, independent_perfs):
     """
-    γ = P_coordinated / ∏(P_independent_i)
+    γ = P_sequential / ∏(P_independent_i)
 
-    Measures performance change from context accumulation
+    Measures performance change from sequential context accumulation.
+    Function name retained for API compatibility.
     """
     return coordinated_perf / np.prod(independent_perfs)
 ```
@@ -357,8 +360,8 @@ def pipeline_health_score(epsilon, gamma_mean, observability_coverage):
     Composite metric for operational decisions
     """
     accuracy = 1.0 / (1.0 + epsilon)
-    coordination = min(1.0, gamma_mean)
-    return accuracy * coordination * observability_coverage
+    context_factor = min(1.0, gamma_mean)
+    return accuracy * context_factor * observability_coverage
 ```
 
 **See:** `src/cert/core/metrics.py` for complete implementations with docstrings and validation.
@@ -506,7 +509,7 @@ CERT provides:
 ## FAQ
 
 **Q: What does γ > 1 actually mean?**
-A: When agents process accumulated context, output quality is higher than if they processed inputs independently. This doesn't prove "coordination" - it measures attention mechanism behavior.
+A: When models process accumulated context in sequential pipelines, output quality is higher than if they processed inputs independently. This measures how attention mechanisms handle extended context, not coordination or intelligence.
 
 **Q: Why does more context sometimes hurt (γ < 1)?**
 A: Context window limitations, attention dilution, or prompt structure issues. CERT detects this, doesn't explain it.
@@ -531,7 +534,7 @@ If you use CERT in production systems or research:
 
 ```bibtex
 @article{marin2025cert,
-  title={CERT: Instrumentation and Metrics for Production LLM Coordination},
+  title={CERT: Instrumentation and Metrics for Production LLM Sequential Processing},
   author={Marín, Javier},
   journal={arXiv preprint},
   year={2025}
@@ -544,7 +547,7 @@ If you use CERT in production systems or research:
 
 - 📘 **Documentation**: [/docs](docs/)
 - 💬 **Issues**: [GitHub Issues](https://github.com/Javihaus/CERT/issues)
-- 📄 **Paper**: "CERT: Instrumentation and Metrics for Production LLM Coordination" (Marín, 2025)
+- 📄 **Paper**: "CERT: Instrumentation and Metrics for Production LLM Sequential Processing" (Marín, 2025)
 
 ---
 
@@ -556,8 +559,8 @@ MIT License - see [LICENSE](LICENSE)
 
 <div align="center">
 
-**Engineering infrastructure for production multi-agent LLM systems**
+**Engineering infrastructure for production multi-model LLM sequential processing**
 
-[Get Started](#30-second-installation) • [Examples](#examples) • [API Docs](#api-reference)
+[Get Started](#five-minute-test) • [Examples](#examples) • [API Docs](#api-reference)
 
 </div>

@@ -337,11 +337,11 @@ def pipeline_health_score(
     # Prediction accuracy component
     accuracy_factor = 1.0 / (1.0 + epsilon)
 
-    # Coordination component (capped at 1.0)
-    coordination_factor = min(1.0, gamma_mean)
+    # Context propagation component (capped at 1.0)
+    context_factor = min(1.0, gamma_mean)
 
     # Composite health score
-    health = accuracy_factor * coordination_factor * observability_coverage
+    health = accuracy_factor * context_factor * observability_coverage
 
     return float(health)
 
