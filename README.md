@@ -61,42 +61,39 @@ from cert.utils.models import compare_models
 compare_models("gpt-4o", "grok-3", "gemini-3.5-pro")
 ```
 
-### Basic Usage - Check Your Agent's Consistency
+### Basic Usage - Measure Your Agent
 
 ```python
 import asyncio
 import cert
-from cert.analysis.semantic import SemanticAnalyzer
 
-async def check_agent_consistency():
-    # 1. Browse and select a validated model
-    cert.print_models()  # Shows all models with baselines
-    cert.get_model_info("gpt-4o")  # Detailed info
+async def evaluate_agent():
+    # 1. Browse models (optional)
+    cert.print_models()
 
-    # 2. Initialize provider - simple and direct!
+    # 2. Create provider
     provider = cert.create_provider(
         api_key="your-api-key",
         model_name="gpt-4o",
-        temperature=0.7,
-        max_tokens=1024,
     )
 
-    # 3. Run the measurement
-    prompt = "Analyze the key factors in project success"
-    responses = []
-    for i in range(10):
-        response = await provider.generate_response(prompt)
-        responses.append(response)
+    # 3. Measure everything - one function!
+    results = await cert.measure_agent(provider, n_consistency_trials=10)
 
-    # Calculate consistency
-    analyzer = SemanticAnalyzer()
-    distances = analyzer.pairwise_distances(responses)
-    consistency = cert.behavioral_consistency(distances)
+    print(f"Consistency: {results['consistency']:.3f}")
+    print(f"Performance: μ={results['mean_performance']:.3f}")
 
-    print(f"Consistency Score: {consistency:.3f}")
-    print(f"✓ Good" if consistency > 0.8 else "⚠ Needs attention")
+asyncio.run(evaluate_agent())
+```
 
-asyncio.run(check_agent_consistency())
+Or measure individually:
+
+```python
+# Just consistency
+consistency = await cert.measure_consistency(provider, n_trials=10)
+
+# Just performance
+mu, sigma = await cert.measure_performance(provider)
 ```
 
 ### Interactive Example
