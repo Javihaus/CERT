@@ -11,7 +11,7 @@ For custom models or domain-specific tasks, see advanced_usage.py
 
 import asyncio
 from cert.models import ModelRegistry, get_model_baseline
-from cert.providers import OpenAIProvider, AnthropicProvider, GoogleProvider, XAIProvider
+from cert.providers import OpenAIProvider, GoogleProvider, XAIProvider
 from cert.providers.base import ProviderConfig
 from cert.analysis.semantic import SemanticAnalyzer
 from cert.analysis.quality import QualityScorer
@@ -75,7 +75,7 @@ async def measure_behavioral_consistency_simple(provider, model_baseline, n_tria
     Uses pre-validated baseline as reference point.
 
     Args:
-        provider: Initialized provider (OpenAI, Anthropic, etc.)
+        provider: Initialized provider (OpenAI, Google, xAI)
         model_baseline: Validated baseline from registry
         n_trials: Number of trials (paper used 20, we use 10 for speed)
     """
@@ -248,7 +248,6 @@ async def main():
     # Map provider name to class
     provider_map = {
         "openai": OpenAIProvider,
-        "anthropic": AnthropicProvider,
         "google": GoogleProvider,
         "xai": XAIProvider,
     }

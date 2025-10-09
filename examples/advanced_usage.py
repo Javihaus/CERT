@@ -12,7 +12,7 @@ For basic usage with validated models, see basic_usage.py
 
 import asyncio
 from cert.models import ModelRegistry, ModelBaseline
-from cert.providers import OpenAIProvider, AnthropicProvider
+from cert.providers import OpenAIProvider, GoogleProvider
 from cert.providers.base import ProviderConfig
 from cert.analysis.semantic import SemanticAnalyzer
 from cert.analysis.quality import QualityScorer
@@ -117,7 +117,7 @@ async def example_healthcare_baseline():
     Example: Measuring baseline for healthcare-specific tasks.
 
     Demonstrates:
-    - Custom model (claude-3-5-sonnet not in registry)
+    - Custom model (not in registry)
     - Domain-specific prompts (medical/healthcare)
     - Custom quality keywords for healthcare domain
     """
@@ -126,7 +126,7 @@ async def example_healthcare_baseline():
     print("="*70)
 
     # Step 1: Check if model is in registry
-    model_id = "claude-3-5-sonnet-20241022"
+    model_id = "gpt-4-turbo"
 
     if ModelRegistry.is_validated(model_id):
         print(f"\n✓ {model_id} is in validated registry")
@@ -174,7 +174,7 @@ async def example_healthcare_baseline():
     print(f"  - Model: {model_id}")
 
     # Step 4: Get API key and initialize provider
-    print(f"\nEnter your Anthropic API key:")
+    print(f"\nEnter your OpenAI API key:")
     api_key = input("> ").strip()
 
     config = ProviderConfig(
@@ -184,7 +184,7 @@ async def example_healthcare_baseline():
         max_tokens=1024,
     )
 
-    provider = AnthropicProvider(config)
+    provider = OpenAIProvider(config)
 
     # Step 5: Measure custom baseline
     print("\nMeasuring healthcare-specific baseline...")
@@ -206,8 +206,8 @@ async def example_healthcare_baseline():
 
     custom_baseline = ModelRegistry.register_custom_baseline(
         model_id=model_id,
-        provider="anthropic",
-        model_family="Claude 3.5 Sonnet (Healthcare)",
+        provider="openai",
+        model_family="GPT-4 Turbo (Healthcare)",
         consistency=consistency,
         mean_performance=mu,
         std_performance=sigma,
@@ -222,20 +222,20 @@ async def example_healthcare_baseline():
     print("Comparison to Paper Baselines")
     print("="*70)
 
-    haiku_baseline = ModelRegistry.get_model("claude-3-haiku-20240307")
-    if haiku_baseline:
-        print(f"\nClaude 3 Haiku (from paper):")
-        print(f"  C = {haiku_baseline.consistency:.3f}")
-        print(f"  μ = {haiku_baseline.mean_performance:.3f}")
-        print(f"  σ = {haiku_baseline.std_performance:.3f}")
+    gpt4o_baseline = ModelRegistry.get_model("gpt-4o")
+    if gpt4o_baseline:
+        print(f"\nGPT-4o (from paper):")
+        print(f"  C = {gpt4o_baseline.consistency:.3f}")
+        print(f"  μ = {gpt4o_baseline.mean_performance:.3f}")
+        print(f"  σ = {gpt4o_baseline.std_performance:.3f}")
 
-        print(f"\nClaude 3.5 Sonnet (Healthcare custom):")
-        print(f"  C = {consistency:.3f} ({consistency - haiku_baseline.consistency:+.3f})")
-        print(f"  μ = {mu:.3f} ({mu - haiku_baseline.mean_performance:+.3f})")
-        print(f"  σ = {sigma:.3f} ({sigma - haiku_baseline.std_performance:+.3f})")
+        print(f"\nGPT-4 Turbo (Healthcare custom):")
+        print(f"  C = {consistency:.3f} ({consistency - gpt4o_baseline.consistency:+.3f})")
+        print(f"  μ = {mu:.3f} ({mu - gpt4o_baseline.mean_performance:+.3f})")
+        print(f"  σ = {sigma:.3f} ({sigma - gpt4o_baseline.std_performance:+.3f})")
 
         print(f"\nNote: Differences expected due to:")
-        print(f"  - Different model (3.5 Sonnet vs 3 Haiku)")
+        print(f"  - Different model (Turbo vs 4o)")
         print(f"  - Different domain (Healthcare vs General Analytical)")
 
     return custom_baseline
