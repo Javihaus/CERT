@@ -43,22 +43,19 @@ class ProviderConfig:
     max_tokens: int = 1024
 
 
-@dataclass
-class ProviderBaseline:
-    """
-    Baseline metrics from paper's Tables 1-3.
-
-    Attributes:
-        consistency: Behavioral consistency C.
-        mean_performance: Mean baseline performance μ.
-        std_performance: Standard deviation σ.
-        architecture_name: Provider architecture name.
-    """
-
-    consistency: float
-    mean_performance: float
-    std_performance: float
-    architecture_name: str
+# Import ModelBaseline from models registry
+# ProviderBaseline is now an alias for ModelBaseline for backward compatibility
+try:
+    from cert.models import ModelBaseline as ProviderBaseline
+except ImportError:
+    # Fallback if models.py not available
+    @dataclass
+    class ProviderBaseline:
+        """Baseline metrics (deprecated - use cert.models.ModelBaseline)."""
+        consistency: float
+        mean_performance: float
+        std_performance: float
+        model_id: str = ""
 
 
 class ProviderError(Exception):
@@ -99,18 +96,32 @@ class ProviderInterface(ABC):
         self._min_request_interval = 60.0 / config.rate_limit_rpm
 
     @abstractmethod
-    def get_baseline(self) -> ProviderBaseline:
+    def get_baseline(self) -> Optional[ProviderBaseline]:
         """
-        Get baseline metrics from paper's validation.
+        Get baseline metrics for the configured model.
 
-        Returns measured baselines from Tables 1-3:
-        - Claude 3/3.5: C=0.831, μ=0.595, σ=0.075
-        - GPT-4: C=0.831, μ=0.638, σ=0.069
-        - Grok 3: C=0.863, μ=0.658, σ=0.062
-        - Gemini 3.5: C=0.895, μ=0.831, σ=0.090
+        Returns validated baseline from ModelRegistry if available.
+        Returns None if model is not in the validated registry.
+
+        Model-Specific Baselines (from CERT paper Tables 1-3):
+        - claude-3-haiku-20240307: C=0.831, μ=0.595, σ=0.075
+        - gpt-4o: C=0.831, μ=0.638, σ=0.069
+        - grok-3: C=0.863, μ=0.658, σ=0.062
+        - gemini-3.5-pro: C=0.895, μ=0.831, σ=0.090
+
+        IMPORTANT: Baselines are MODEL-specific, not provider-generic.
+        claude-3-5-sonnet will have different baselines than claude-3-haiku.
 
         Returns:
-            ProviderBaseline with measured values from paper.
+            ModelBaseline with measured values from paper, or None if not validated.
+
+        Example:
+            >>> provider = OpenAIProvider(config)
+            >>> baseline = provider.get_baseline()
+            >>> if baseline:
+            ...     print(f"Using validated baseline for {baseline.model_id}")
+            ... else:
+            ...     print("Model not validated - measure custom baseline")
         """
         pass
 

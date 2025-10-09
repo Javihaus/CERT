@@ -12,15 +12,21 @@ from cert.core.metrics import (
     prediction_error,
     pipeline_health_score,
 )
-from cert.core.observability import ObservabilityTracker
-from cert.core.pipeline import Pipeline, PipelineConfig
+from cert.models import ModelRegistry, ModelBaseline, get_model_baseline
+
+# Note: ObservabilityTracker and Pipeline will be available when implemented
+# from cert.core.observability import ObservabilityTracker
+# from cert.core.pipeline import Pipeline, PipelineConfig
 
 __all__ = [
     "behavioral_consistency",
     "coordination_effect",
     "prediction_error",
     "pipeline_health_score",
-    "ObservabilityTracker",
-    "Pipeline",
-    "PipelineConfig",
+    "ModelRegistry",
+    "ModelBaseline",
+    "get_model_baseline",
+    # "ObservabilityTracker",
+    # "Pipeline",
+    # "PipelineConfig",
 ]
