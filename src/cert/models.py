@@ -149,24 +149,11 @@ class ModelRegistry:
             paper_section="Tables 1-3",
             validation_date="2025-01",
         ),
-        # GPT-5 (ChatGPT-5 baseline validation)
+        # GPT-5 / ChatGPT-5 (same model, baseline validation)
         "gpt-5": ModelBaseline(
             model_id="gpt-5",
             provider="openai",
             model_family="GPT-5",
-            consistency=0.702,
-            mean_performance=0.543,
-            std_performance=0.048,
-            coordination_2agent=1.911,
-            coordination_5agent=None,  # To be measured
-            paper_section="Community Measurement",
-            validation_date="2025-10",
-        ),
-        # ChatGPT-5 (alias for gpt-5)
-        "chatgpt-5": ModelBaseline(
-            model_id="chatgpt-5",
-            provider="openai",
-            model_family="ChatGPT-5",
             consistency=0.702,
             mean_performance=0.543,
             std_performance=0.048,
@@ -203,6 +190,11 @@ class ModelRegistry:
         ),
     }
 
+    # Model aliases (multiple names for same model)
+    _MODEL_ALIASES = {
+        "chatgpt-5": "gpt-5",  # ChatGPT-5 is the same as GPT-5
+    }
+
     @classmethod
     def get_model(cls, model_id: str) -> Optional[ModelBaseline]:
         """
@@ -210,6 +202,7 @@ class ModelRegistry:
 
         Args:
             model_id: Model identifier (e.g., "gpt-4o", "claude-3-haiku-20240307").
+                     Supports aliases (e.g., "chatgpt-5" → "gpt-5").
 
         Returns:
             ModelBaseline if model is validated, None otherwise.
@@ -220,8 +213,13 @@ class ModelRegistry:
             ...     print(f"Consistency: {baseline.consistency}")
             ... else:
             ...     print("Model not in registry - measure custom baseline")
+
+            >>> # Aliases work too
+            >>> baseline = ModelRegistry.get_model("chatgpt-5")  # Same as gpt-5
         """
-        return cls._VALIDATED_MODELS.get(model_id)
+        # Check for alias first
+        actual_id = cls._MODEL_ALIASES.get(model_id, model_id)
+        return cls._VALIDATED_MODELS.get(actual_id)
 
     @classmethod
     def list_models(cls, provider: Optional[str] = None) -> List[ModelBaseline]:

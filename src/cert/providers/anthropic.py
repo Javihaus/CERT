@@ -64,7 +64,8 @@ class AnthropicProvider(ProviderInterface):
         if not self._is_claude_model(config.model_name):
             raise ValueError(
                 f"Model {config.model_name} is not a recognized Claude model. "
-                f"Supported: claude-3-haiku, claude-3-5-haiku, claude-3-sonnet, claude-3-5-sonnet"
+                f"Supported: claude-3-haiku, claude-3-5-haiku, claude-3-sonnet, "
+                f"claude-3-5-sonnet, claude-sonnet-4"
             )
 
     def _is_claude_model(self, model_name: str) -> bool:
@@ -75,6 +76,7 @@ class AnthropicProvider(ProviderInterface):
             "claude-3-sonnet",
             "claude-3-5-sonnet",
             "claude-3-opus",
+            "claude-sonnet-4",  # Claude Sonnet 4.5
         }
         return any(model_name.startswith(m) for m in claude_models)
 
@@ -87,6 +89,7 @@ class AnthropicProvider(ProviderInterface):
         Validated models:
         - claude-3-haiku-20240307: C=0.831, μ=0.595, σ=0.075
         - claude-3-5-haiku-20241022: C=0.831, μ=0.595, σ=0.075
+        - claude-sonnet-4-20250514: C=0.892, μ=0.745, σ=0.058
 
         Note: claude-3-sonnet and claude-3-5-sonnet are NOT in the validated
         registry. Users must measure custom baselines for these models.

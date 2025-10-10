@@ -250,19 +250,26 @@ cert_integration.print_metrics()
 
 CERT includes empirically measured baselines from controlled validation:
 
-| Model | Provider | C (variance) | μ (mean) | σ (std) | γ (2-agent) | Notes |
-|-------|----------|--------------|----------|---------|-------------|-------|
+| Model | Provider | C | μ | σ | γ (2-agent) | Notes |
+|-------|----------|---|---|---|-------------|-------|
 | **`claude-sonnet-4.5`** 🆕 | **Anthropic** | **0.892** | **0.745** | **0.058** | **1.245** | **Highest C & μ!** |
-| `gemini-3.5-pro` | Google | 0.895 | 0.831 | 0.090 | 1.137 | 2nd highest μ |
+| `gemini-3.5-pro` | Google | 0.895 | 0.831 | 0.090 | 1.137 | Individual specialist |
 | `grok-3` | xAI | 0.863 | 0.658 | 0.062 | 1.625 | High γ |
 | `gpt-4o` | OpenAI | 0.831 | 0.638 | 0.069 | 1.562 | Best ε (0.003) |
 | `gpt-4o-mini` | OpenAI | 0.831 | 0.638 | 0.069 | 1.562 | Cost-effective |
 | `claude-3-5-haiku` | Anthropic | 0.831 | 0.595 | 0.075 | 1.462 | Fastest |
+| `claude-3-haiku` | Anthropic | 0.831 | 0.595 | 0.075 | 1.462 | Legacy baseline |
 | **`gpt-5`** 🆕 | **OpenAI** | **0.702** | **0.543** | **0.048** | **1.911** | **Strongest γ!** |
+
+**Model Aliases**: `chatgpt-5` → `gpt-5` (same model)
+
+**8 unique models** across 4 providers (Anthropic, Google, OpenAI, xAI)
 
 ### GPT-5 Characteristics
 
-**🔥 FIRST MEASURED BASELINE FOR GPT-5 (ChatGPT-5)**
+**🔥 FIRST MEASURED BASELINE FOR GPT-5**
+
+_Note: ChatGPT-5 and GPT-5 are the same model. Use either `gpt-5` or `chatgpt-5` as model ID._
 
 GPT-5 shows a **unique profile**:
 - **Lower individual performance** (μ=0.543 vs GPT-4o's 0.638)
