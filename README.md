@@ -4,6 +4,40 @@ A Python SDK for observability and reliability tracking in multi-model LLM seque
 
 CERT (Consistency, Effect, and Reliability Tracking) provides production-grade instrumentation for monitoring, debugging, and validating sequential LLM pipelines. Built for teams deploying multi-agent AI systems at scale.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [Basic Usage](#basic-usage)
+  - [Sequential Pipeline Measurement](#sequential-pipeline-measurement)
+- [Core Concepts](#core-concepts)
+  - [Behavioral Consistency](#behavioral-consistency)
+  - [Context Propagation Effect](#context-propagation-effect)
+  - [Pipeline Health](#pipeline-health)
+- [Framework Integrations](#framework-integrations)
+  - [LangChain](#langchain)
+  - [CrewAI](#crewai)
+  - [AutoGen](#autogen)
+- [Use Cases](#use-cases)
+  - [Pre-Deployment Validation](#pre-deployment-validation)
+  - [Model Drift Detection](#model-drift-detection)
+  - [Architecture Optimization](#architecture-optimization)
+- [API Reference](#api-reference)
+  - [Providers](#providers)
+  - [Measurement Functions](#measurement-functions)
+  - [Pipeline Health Assessment](#pipeline-health-assessment)
+- [Configuration](#configuration)
+- [Advanced Features](#advanced-features)
+  - [Custom Metrics](#custom-metrics)
+  - [Batch Processing](#batch-processing)
+  - [Experiment Tracking](#experiment-tracking)
+- [Empirical Baselines](#empirical-baselines)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+- [Citation](#citation)
+
 ## Overview
 
 Modern LLM applications increasingly rely on sequential processing through multiple models and agents. CERT provides the observability infrastructure needed to measure, monitor, and maintain reliability in these complex systems.
