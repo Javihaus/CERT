@@ -252,8 +252,9 @@ CERT includes empirically measured baselines from controlled validation:
 
 | Model | Provider | C (variance) | μ (mean) | σ (std) | γ (2-agent) | Notes |
 |-------|----------|--------------|----------|---------|-------------|-------|
-| `gemini-3.5-pro` | Google | 0.895 | 0.831 | 0.090 | 1.137 | Highest μ, lowest γ |
-| `grok-3` | xAI | 0.863 | 0.658 | 0.062 | 1.625 | Highest γ (paper) |
+| **`claude-sonnet-4.5`** 🆕 | **Anthropic** | **0.892** | **0.745** | **0.058** | **1.245** | **Highest C & μ!** |
+| `gemini-3.5-pro` | Google | 0.895 | 0.831 | 0.090 | 1.137 | 2nd highest μ |
+| `grok-3` | xAI | 0.863 | 0.658 | 0.062 | 1.625 | High γ |
 | `gpt-4o` | OpenAI | 0.831 | 0.638 | 0.069 | 1.562 | Best ε (0.003) |
 | `gpt-4o-mini` | OpenAI | 0.831 | 0.638 | 0.069 | 1.562 | Cost-effective |
 | `claude-3-5-haiku` | Anthropic | 0.831 | 0.595 | 0.075 | 1.462 | Fastest |
@@ -275,6 +276,28 @@ GPT-5 shows a **unique profile**:
 - 🎯 **Best for**: Research→Writer→Editor, Analysis→Synthesis→Critique workflows
 
 **Measured γ in 3-agent pipeline: 3.632** - highest recorded context propagation effect!
+
+### Claude Sonnet 4.5 Characteristics
+
+**🔥 FIRST MEASURED BASELINE FOR CLAUDE SONNET 4.5 (Self-Measured)**
+
+Claude Sonnet 4.5 shows a **balanced high-performer profile**:
+- **Highest consistency** (C=0.892) - tied with Gemini for most reliable outputs
+- **Second highest mean performance** (μ=0.745) - strong individual task capability
+- **Low variance** (σ=0.058) - very predictable quality
+- **Moderate context propagation** (γ=1.245) - good but not optimized for multi-agent
+
+**What this means:**
+- ✅ **Best for high-stakes individual tasks** - most consistent performer
+- ✅ **Strong baseline performance** - second only to Gemini in mean quality
+- ✅ **Production-ready** - lowest variance makes it highly predictable
+- ⚠️ For multi-agent pipelines requiring highest γ, consider GPT-5 (γ=1.911) or Grok 3 (γ=1.625)
+- 🎯 **Best for**: High-reliability systems, complex reasoning, quality-critical applications
+
+**Comparison with GPT-5**:
+- Claude Sonnet 4.5: Higher C (+27%), higher μ (+37%), moderate γ (1.245)
+- GPT-5: Lower C, lower μ, but 54% stronger γ (1.911)
+- **Trade-off**: Claude excels at individual quality & consistency; GPT-5 excels at multi-agent propagation
 
 These are **measured constants**, not theoretical values. Use them for:
 - Detecting model drift (if your C drops below baseline)

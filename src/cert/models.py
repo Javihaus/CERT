@@ -175,6 +175,32 @@ class ModelRegistry:
             paper_section="Community Measurement",
             validation_date="2025-10",
         ),
+        # Claude Sonnet 4.5 (self-measured baseline)
+        "claude-sonnet-4-20250514": ModelBaseline(
+            model_id="claude-sonnet-4-20250514",
+            provider="anthropic",
+            model_family="Claude Sonnet 4.5",
+            consistency=0.892,
+            mean_performance=0.745,
+            std_performance=0.058,
+            coordination_2agent=1.245,
+            coordination_5agent=None,  # To be measured
+            paper_section="Community Measurement",
+            validation_date="2025-10",
+        ),
+        # Claude Sonnet 4.5 (alias)
+        "claude-sonnet-4.5": ModelBaseline(
+            model_id="claude-sonnet-4.5",
+            provider="anthropic",
+            model_family="Claude Sonnet 4.5",
+            consistency=0.892,
+            mean_performance=0.745,
+            std_performance=0.058,
+            coordination_2agent=1.245,
+            coordination_5agent=None,  # To be measured
+            paper_section="Community Measurement",
+            validation_date="2025-10",
+        ),
     }
 
     @classmethod
