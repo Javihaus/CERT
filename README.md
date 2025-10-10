@@ -1,5 +1,10 @@
 # CERT SDK
 
+[![PyPI](https://img.shields.io/pypi/v/cert-sdk.svg)](https://pypi.org/project/cert-sdk/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/pypi/pyversions/cert-sdk.svg)](https://pypi.org/project/cert-sdk/)
+[![Documentation](https://img.shields.io/badge/docs-cert--sdk-blue.svg)](https://cert-sdk.readthedocs.io)
+
 A Python SDK for observability and reliability tracking in multi-model LLM sequential processing.
 
 CERT (Consistency, Effect, and Reliability Tracking) provides production-grade instrumentation for monitoring, debugging, and validating sequential LLM pipelines. Built for teams deploying multi-agent AI systems at scale.
