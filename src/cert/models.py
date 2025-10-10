@@ -56,7 +56,7 @@ class ModelBaseline:
     def __str__(self) -> str:
         return (
             f"{self.model_family} ({self.model_id}): "
-            f"C={self.consistency:.3f}, μ={self.mean_performance:.3f}, σ={self.std_performance:.3f}"
+            f"C={self.consistency:.3f}, mu={self.mean_performance:.3f}, sigma={self.std_performance:.3f}"
         )
 
 
@@ -364,13 +364,13 @@ class ModelRegistry:
             for model in sorted(by_provider[provider], key=lambda m: m.model_id):
                 lines.append(
                     f"  {model.model_family:20} | C={model.consistency:.3f} "
-                    f"μ={model.mean_performance:.3f} σ={model.std_performance:.3f}"
+                    f"mu={model.mean_performance:.3f} sigma={model.std_performance:.3f}"
                 )
                 lines.append(f"    model_id: {model.model_id}")
                 if model.coordination_2agent:
-                    lines.append(f"    γ(2-agent): {model.coordination_2agent:.3f}")
+                    lines.append(f"    gamma(2-agent): {model.coordination_2agent:.3f}")
                 if model.coordination_5agent:
-                    lines.append(f"    γ(5-agent): {model.coordination_5agent:.3f}")
+                    lines.append(f"    gamma(5-agent): {model.coordination_5agent:.3f}")
                 lines.append("")
 
         lines.append("=" * 70)
