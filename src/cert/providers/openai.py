@@ -73,6 +73,11 @@ class OpenAIProvider(ProviderInterface):
         openai_patterns = ["gpt", "o1", "davinci", "text-", "chatgpt"]
         return any(model_name.lower().startswith(p) for p in openai_patterns)
 
+    def _is_reasoning_model(self, model_name: str) -> bool:
+        """Check if model is a reasoning model (o1-preview, o1-mini, etc.)."""
+        # Reasoning models use different parameters
+        return model_name.lower().startswith("o1")
+
     def get_baseline(self) -> Optional[ProviderBaseline]:
         """
         Get validated baseline for the configured OpenAI model.
@@ -152,13 +157,29 @@ class OpenAIProvider(ProviderInterface):
         **kwargs: Any,
     ) -> str:
         """Internal method to generate a single response."""
-        response = await self.client.chat.completions.create(
-            model=self.config.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            **kwargs,
-        )
+        # Build request parameters
+        params = {
+            "model": self.config.model_name,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+
+        # Reasoning models (o1-*) use different parameters
+        if self._is_reasoning_model(self.config.model_name):
+            # o1 models don't support temperature or max_tokens
+            # They use max_completion_tokens instead
+            if max_tokens:
+                params["max_completion_tokens"] = max_tokens
+            # Don't include temperature for o1 models
+        else:
+            # Standard models use temperature and max_tokens
+            params["temperature"] = temperature
+            if max_tokens:
+                params["max_tokens"] = max_tokens
+
+        # Add any additional kwargs
+        params.update(kwargs)
+
+        response = await self.client.chat.completions.create(**params)
         return response.choices[0].message.content or ""
 
     async def batch_generate(
