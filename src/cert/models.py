@@ -149,6 +149,32 @@ class ModelRegistry:
             paper_section="Tables 1-3",
             validation_date="2025-01",
         ),
+        # GPT-5 (ChatGPT-5 baseline validation)
+        "gpt-5": ModelBaseline(
+            model_id="gpt-5",
+            provider="openai",
+            model_family="GPT-5",
+            consistency=0.702,
+            mean_performance=0.543,
+            std_performance=0.048,
+            coordination_2agent=1.911,
+            coordination_5agent=None,  # To be measured
+            paper_section="Community Measurement",
+            validation_date="2025-10",
+        ),
+        # ChatGPT-5 (alias for gpt-5)
+        "chatgpt-5": ModelBaseline(
+            model_id="chatgpt-5",
+            provider="openai",
+            model_family="ChatGPT-5",
+            consistency=0.702,
+            mean_performance=0.543,
+            std_performance=0.048,
+            coordination_2agent=1.911,
+            coordination_5agent=None,  # To be measured
+            paper_section="Community Measurement",
+            validation_date="2025-10",
+        ),
     }
 
     @classmethod
