@@ -17,8 +17,6 @@ CERT instruments multi-model LLM systems to measure:
 2. **Context Propagation Effect (γ)**: Performance changes when models process accumulated context
 3. **Pipeline Health (H)**: Composite operational metric for deployment decisions
 
-This is **engineering infrastructure for production monitoring**, not a coordination framework or intelligence system. It measures how attention mechanisms process extended context, not agent collaboration or coordination principles.
-
 ---
 
 ## Five-Minute Test
