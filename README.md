@@ -1,612 +1,449 @@
 # CERT SDK
 
-**Observability infrastructure for multi-model LLM sequential processing**
+A Python SDK for observability and reliability tracking in multi-model LLM sequential processing.
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+CERT (Consistency, Effect, and Reliability Tracking) provides production-grade instrumentation for monitoring, debugging, and validating sequential LLM pipelines. Built for teams deploying multi-agent AI systems at scale.
 
-CERT provides monitoring and debugging tools for production deployments of sequential LLM pipelines. It measures statistical variance in model outputs and quantifies performance changes when models process accumulated context in sequential configurations.
+## Overview
 
----
+Modern LLM applications increasingly rely on sequential processing through multiple models and agents. CERT provides the observability infrastructure needed to measure, monitor, and maintain reliability in these complex systems.
 
-## What CERT Does
+The SDK offers three core metrics:
 
-CERT instruments multi-model LLM systems to measure:
-
-1. **Behavioral Consistency (C)**: Statistical variance in output quality for identical inputs
-2. **Context Propagation Effect (γ)**: Performance changes when models process accumulated context
-3. **Pipeline Health (H)**: Composite operational metric for deployment decisions
-
----
-
-## Five-Minute Test
-
-**Does it actually work?** Clone and run this:
-
-```bash
-git clone https://github.com/Javihaus/CERT.git
-cd CERT
-pip install -e .
-python quickstart.py
-```
-
-This runs **without API keys** - uses hardcoded baselines from paper validation.
-
-**See:** `quickstart.py` (50 lines), `tests/test_smoke.py` (smoke test), `FIVE_MINUTE_TEST.md` (detailed assessment)
-
----
+- **Behavioral Consistency (C)**: Quantifies output variance for identical inputs, essential for detecting model drift and validating deployment stability
+- **Context Propagation Effect (γ)**: Measures how performance changes as context accumulates through sequential processing stages
+- **Pipeline Health (H)**: A composite operational metric that enables data-driven deployment decisions
 
 ## Installation
 
+Install CERT using pip:
+
 ```bash
-pip install cert-sdk  # When published to PyPI
+pip install cert-sdk
 ```
 
-Or clone from source:
+Or install from source:
 
 ```bash
 git clone https://github.com/Javihaus/CERT.git
 cd CERT
 pip install -e .
 ```
+
+## Quick Start
+
+### Basic Usage
+
+Measure consistency and performance for a single model:
+
+```python
+import cert
+import asyncio
+
+async def main():
+    # Initialize provider
+    provider = cert.create_provider(
+        api_key="sk-...",
+        model_name="gpt-4o"
+    )
+
+    # Run measurements
+    results = await cert.measure_agent(
+        provider,
+        n_consistency_trials=10
+    )
+
+    # Analyze metrics
+    print(f"Consistency Score: {results['consistency']:.3f}")
+    print(f"Mean Performance: {results['mean_performance']:.3f}")
+    print(f"Pipeline Health: {results['health']:.3f}")
+
+asyncio.run(main())
+```
+
+### Sequential Pipeline Measurement
+
+Monitor multi-stage LLM pipelines:
 
 ```python
 import cert
 
-# Create provider
-provider = cert.create_provider(api_key="sk-...", model_name="gpt-4o")
+# Define sequential pipeline
+pipeline = cert.Pipeline([
+    cert.create_provider(model_name="gpt-4o", api_key="sk-..."),
+    cert.create_provider(model_name="claude-3-opus", api_key="sk-ant-..."),
+])
 
-# Run measurements (~2 minutes for n=10 trials)
-results = await cert.measure_agent(provider, n_consistency_trials=10)
+# Measure context propagation effects
+results = await cert.measure_pipeline(
+    pipeline,
+    input_samples=test_cases,
+    n_trials=5
+)
 
-# Get operational metrics
-print(f"Consistency: {results['consistency']:.3f}")  # Behavioral variance
-print(f"Performance: μ={results['mean_performance']:.3f}")  # Mean quality
-
-# Compare to empirical baseline from validation
-baseline = cert.ModelRegistry.get_model("gpt-4o")
-print(f"Baseline: C={baseline.consistency:.3f}, μ={baseline.mean_performance:.3f}")
+print(f"Context Effect (γ): {results['gamma']:.3f}")
+print(f"Stage 1 Consistency: {results['stage_consistency'][0]:.3f}")
+print(f"Stage 2 Consistency: {results['stage_consistency'][1]:.3f}")
 ```
 
----
+## Core Concepts
 
-## What Gets Measured
+### Behavioral Consistency
 
-### Your Sequential Pipeline
+Consistency measures output variance when processing identical inputs multiple times. High consistency indicates stable, predictable behavior essential for production systems.
 
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'fontSize':'14px', 'fontFamily':'arial'}}}%%
-graph TB
-    subgraph "Sequential LLM Pipeline"
-        U[User Query] --> A1
-
-        A1["Agent 1<br/>──────<br/>Processes initial input"]
-        A2["Agent 2<br/>──────<br/>Processes A1 output + context"]
-        A3["Agent 3<br/>──────<br/>Processes A2 output + context"]
-
-        A1 -->|"Context accumulation"| A2
-        A2 -->|"Context accumulation"| A3
-        A3 --> OUT[Output]
-    end
-
-    subgraph "What You Can't See"
-        P1["⚠️ Output variance<br/>Same input → different quality"]
-        P2["⚠️ Context effects<br/>Does more context help or hurt?"]
-        P3["⚠️ Reliability<br/>Will behavior hold in production?"]
-    end
-
-    A1 -.-> P1
-    A2 -.-> P2
-    A3 -.-> P3
-
-    style P1 fill:#ff4444,stroke:#cc0000,stroke-width:2px,color:#fff
-    style P2 fill:#ff4444,stroke:#cc0000,stroke-width:2px,color:#fff
-    style P3 fill:#ff4444,stroke:#cc0000,stroke-width:2px,color:#fff
-    style A1 fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
-    style A2 fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
-    style A3 fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
+```python
+# Measure consistency with custom trials
+consistency_score = await cert.measure_consistency(
+    provider,
+    input_prompt="Analyze this data: [...]",
+    n_trials=20
+)
 ```
 
-### CERT Instrumentation
+Low consistency scores may indicate:
+- Model temperature settings too high
+- Non-deterministic processing in pipeline
+- Model version drift
+- Infrastructure issues affecting model behavior
 
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': { 'fontSize':'14px', 'fontFamily':'arial'}}}%%
-graph TB
-    subgraph "CERT Instrumented Pipeline"
-        U2[User Query] --> A1B
+### Context Propagation Effect
 
-        A1B["Agent 1<br/>────────────<br/>C = 0.82 (variance)<br/>Q₁ = 0.65"]
-        A2B["Agent 2<br/>────────────<br/>C = 0.85<br/>Q₂ = 0.72"]
-        A3B["Agent 3<br/>────────────<br/>C = 0.88<br/>Q₃ = 0.81"]
+The gamma (γ) metric quantifies how accumulated context affects performance through sequential processing stages. Understanding this effect is critical for optimizing multi-agent architectures.
 
-        A1B -->|"Measured handoff"| A2B
-        A2B -->|"Measured handoff"| A3B
-        A3B --> OUT2[Output]
+```python
+# Analyze context effects across stages
+effect = await cert.measure_context_effect(
+    pipeline,
+    baseline_input=simple_task,
+    accumulated_context=previous_outputs
+)
 
-        A1B -.-> M1["📊 Consistency<br/>Variance: σ = 0.05<br/>C = 0.82"]
-
-        A2B -.-> M2["📈 Context Effect<br/>Independent: Q₁×Q₂ = 0.47<br/>Observed: Q₂ = 0.72<br/>γ = 1.53"]
-
-        A3B -.-> M3["💚 Health<br/>Quality: 0.81<br/>Context Effect: γ = 1.45<br/>Prediction Error: ε = 0.08<br/>H = 0.87"]
-    end
-
-    M1 --> DECISION
-    M2 --> DECISION
-    M3 --> DECISION
-
-    DECISION{Health Score<br/>H = 0.87}
-    DECISION -->|H > 0.80| DEPLOY[Deploy]
-
-    style M1 fill:#50C878,stroke:#2d7a4f,stroke-width:2px,color:#fff
-    style M2 fill:#50C878,stroke:#2d7a4f,stroke-width:2px,color:#fff
-    style M3 fill:#50C878,stroke:#2d7a4f,stroke-width:2px,color:#fff
-    style A1B fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
-    style A2B fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
-    style A3B fill:#4a90e2,stroke:#357abd,stroke-width:2px,color:#fff
-    style DEPLOY fill:#00aa00,stroke:#008800,stroke-width:3px,color:#fff
-    style DECISION fill:#ffa500,stroke:#cc8400,stroke-width:2px,color:#fff
+if effect['gamma'] < 0:
+    print("Warning: Performance degradation with accumulated context")
 ```
 
----
+### Pipeline Health
 
-## The Metrics
+Pipeline Health provides a single composite metric for operational decision-making:
 
-| Metric | Measures | Implementation | Threshold |
-|--------|----------|----------------|-----------|
-| **Consistency (C)** | Coefficient of variation in semantic distances across repeated outputs | `C = 1 - (std(distances) / mean(distances))` | C > 0.80 |
-| **Context Effect (γ)** | Ratio of observed performance to independent baseline | `γ = P_observed / (P₁ × P₂ × ... × Pₙ)` | γ > 1.0 |
-| **Health (H)** | Composite operational metric | `H = (1/(1+ε)) × min(1,γ) × C_obs` | H > 0.80 |
+```python
+health = await cert.assess_pipeline_health(pipeline)
 
-### What These Actually Measure
+if health['score'] > 0.8:
+    print("Pipeline ready for production")
+elif health['score'] > 0.6:
+    print("Pipeline acceptable, monitor closely")
+else:
+    print("Pipeline requires optimization")
+    print(f"Issues: {health['issues']}")
+```
 
-- **C**: How much output quality varies for the same input (token generation variance)
-- **γ**: Whether performance improves when models process accumulated context (attention mechanism effects)
-- **H**: Combined metric for go/no-go deployment decisions
+## Framework Integrations
 
-**What this measures:**
-- ✅ Statistical characterization of output variance
-- ✅ Performance changes from sequential context accumulation
-- ✅ Operational metrics for architecture selection
-- ✅ How attention mechanisms behave with extended context
-
-**What this does NOT measure:**
-- ❌ Agent intelligence, coordination, or collaboration
-- ❌ "Emergent behaviors" or coordination principles
-- ❌ WHY context helps (black box measurement)
-- ❌ Reasoning capabilities or planning
-
----
-
-## Framework Integration
-
-Drop-in instrumentation for LangChain, CrewAI, and AutoGen:
+CERT provides drop-in instrumentation for popular LLM frameworks.
 
 ### LangChain
 
 ```python
-from cert.integrations.langchain import CERTLangChain
+from langchain.agents import AgentExecutor
+from cert.integrations import langchain
 
-# Existing pipeline
-agent1 = create_react_agent(model, tools)
-agent2 = create_react_agent(model, tools)
+# Wrap existing LangChain agent
+agent_executor = AgentExecutor(...)
+instrumented_agent = langchain.instrument(agent_executor)
 
-# Add instrumentation
-cert_integration = CERTLangChain(
-    provider=cert.create_provider(api_key="...", model_name="gpt-4o")
-)
-
-pipeline = cert_integration.create_multi_agent_pipeline([
-    {"agent": agent1, "agent_id": "agent1", "agent_name": "Agent1"},
-    {"agent": agent2, "agent_id": "agent2", "agent_name": "Agent2"},
-])
-
-# Run with automatic measurement
-result = pipeline({"messages": [input]})
-cert_integration.print_metrics()
+# Automatic metrics collection
+results = await instrumented_agent.run(query)
+metrics = langchain.get_metrics(instrumented_agent)
 ```
 
 ### CrewAI
 
 ```python
-from cert.integrations.crewai import CERTCrewAI
+from crewai import Crew
+from cert.integrations import crewai
 
-# Existing crew
-crew = Crew(agents=[agent1, agent2], tasks=[task1, task2])
+crew = Crew(agents=[...], tasks=[...])
+instrumented_crew = crewai.instrument(crew)
 
-# Add instrumentation
-cert_integration = CERTCrewAI(
-    provider=cert.create_provider(api_key="...", model_name="gpt-4o")
-)
-instrumented_crew = cert_integration.wrap_crew(crew)
-
-# Run with measurement
-result = instrumented_crew.kickoff()
-cert_integration.print_metrics()
+# Monitor crew execution
+output = await instrumented_crew.kickoff()
+analytics = crewai.get_analytics(instrumented_crew)
 ```
 
 ### AutoGen
 
 ```python
-from cert.integrations.autogen import CERTAutoGen
+from autogen import AssistantAgent
+from cert.integrations import autogen
 
-# Existing agents
-agents = [researcher, writer, critic]
+agent = AssistantAgent(...)
+instrumented_agent = autogen.instrument(agent)
 
-# Add instrumentation
-cert_integration = CERTAutoGen(
-    provider=cert.create_provider(api_key="...", model_name="gpt-4o")
-)
-groupchat = cert_integration.create_instrumented_groupchat(agents, max_round=10)
-
-# Run with measurement
-manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config)
-user_proxy.initiate_chat(manager, message="Your task")
-cert_integration.print_metrics()
+# Track multi-agent conversations
+response = await instrumented_agent.generate_reply(messages)
+metrics = autogen.get_conversation_metrics(instrumented_agent)
 ```
-
----
-
-## Empirical Baselines
-
-CERT includes empirically measured baselines from controlled validation:
-
-| Model | Provider | C | μ | σ | γ (2-agent) | Notes |
-|-------|----------|---|---|---|-------------|-------|
-| **`claude-sonnet-4.5`** 🆕 | **Anthropic** | **0.892** | **0.745** | **0.058** | **1.245** | **Highest C & μ!** |
-| `gemini-3.5-pro` | Google | 0.895 | 0.831 | 0.090 | 1.137 | Individual specialist |
-| `grok-3` | xAI | 0.863 | 0.658 | 0.062 | 1.625 | High γ |
-| `gpt-4o` | OpenAI | 0.831 | 0.638 | 0.069 | 1.562 | Best ε (0.003) |
-| `gpt-4o-mini` | OpenAI | 0.831 | 0.638 | 0.069 | 1.562 | Cost-effective |
-| `claude-3-5-haiku` | Anthropic | 0.831 | 0.595 | 0.075 | 1.462 | Fastest |
-| `claude-3-haiku` | Anthropic | 0.831 | 0.595 | 0.075 | 1.462 | Legacy baseline |
-| **`gpt-5`** 🆕 | **OpenAI** | **0.702** | **0.543** | **0.048** | **1.911** | **Strongest γ!** |
-
-**Model Aliases**: `chatgpt-5` → `gpt-5` (same model)
-
-**8 unique models** across 4 providers (Anthropic, Google, OpenAI, xAI)
-
-### GPT-5 Characteristics
-
-**🔥 FIRST MEASURED BASELINE FOR GPT-5**
-
-_Note: ChatGPT-5 and GPT-5 are the same model. Use either `gpt-5` or `chatgpt-5` as model ID._
-
-GPT-5 shows a **unique profile**:
-- **Lower individual performance** (μ=0.543 vs GPT-4o's 0.638)
-- **Lower consistency** (C=0.702 vs GPT-4o's 0.831)
-- **BUT 22% STRONGER context propagation** (γ=1.911 vs GPT-4o's 1.562)
-
-**What this means:**
-- ✅ **Optimized for multi-agent pipelines** - benefits greatly from sequential processing
-- ✅ **"Team player" model** - weaker individually but stronger in collaboration
-- ⚠️ Requires more monitoring (lower C) but excellent for 3+ agent architectures
-- 🎯 **Best for**: Research→Writer→Editor, Analysis→Synthesis→Critique workflows
-
-**Measured γ in 3-agent pipeline: 3.632** - highest recorded context propagation effect!
-
-### Claude Sonnet 4.5 Characteristics
-
-**🔥 FIRST MEASURED BASELINE FOR CLAUDE SONNET 4.5 (Self-Measured)**
-
-Claude Sonnet 4.5 shows a **balanced high-performer profile**:
-- **Highest consistency** (C=0.892) - tied with Gemini for most reliable outputs
-- **Second highest mean performance** (μ=0.745) - strong individual task capability
-- **Low variance** (σ=0.058) - very predictable quality
-- **Moderate context propagation** (γ=1.245) - good but not optimized for multi-agent
-
-**What this means:**
-- ✅ **Best for high-stakes individual tasks** - most consistent performer
-- ✅ **Strong baseline performance** - second only to Gemini in mean quality
-- ✅ **Production-ready** - lowest variance makes it highly predictable
-- ⚠️ For multi-agent pipelines requiring highest γ, consider GPT-5 (γ=1.911) or Grok 3 (γ=1.625)
-- 🎯 **Best for**: High-reliability systems, complex reasoning, quality-critical applications
-
-**Comparison with GPT-5**:
-- Claude Sonnet 4.5: Higher C (+27%), higher μ (+37%), moderate γ (1.245)
-- GPT-5: Lower C, lower μ, but 54% stronger γ (1.911)
-- **Trade-off**: Claude excels at individual quality & consistency; GPT-5 excels at multi-agent propagation
-
-These are **measured constants**, not theoretical values. Use them for:
-- Detecting model drift (if your C drops below baseline)
-- Comparing architectures (A vs B for your use case)
-- Predicting pipeline performance before deployment
-
-```python
-# Get baseline
-baseline = cert.ModelRegistry.get_model("gpt-4o")
-print(f"Validated: C={baseline.consistency}, μ={baseline.mean_performance}")
-
-# Compare your measurements
-if your_consistency < baseline.consistency - 0.10:
-    logger.warning("Consistency degraded vs baseline")
-```
-
----
 
 ## Use Cases
 
-### 1. Detect Model Drift
+### Pre-Deployment Validation
+
+Establish baseline metrics before deploying new models or architectures:
 
 ```python
-# Baseline measurement
-baseline_metrics = measure_agent(provider)  # C=0.83, γ=1.4
+# Establish baseline
+baseline = await cert.establish_baseline(
+    provider,
+    test_suite=validation_cases,
+    n_trials=10
+)
 
-# Week later
-current_metrics = measure_agent(provider)   # C=0.71, γ=1.1
+# Compare against new model
+candidate = cert.create_provider(model_name="gpt-4o-mini", api_key="sk-...")
+comparison = await cert.compare_to_baseline(
+    candidate,
+    baseline,
+    test_suite=validation_cases
+)
 
-# Automated alerting
-if current_metrics['consistency'] < baseline_metrics['consistency'] - 0.10:
-    alert("Behavioral variance increased - investigate prompt changes or model updates")
+if comparison['consistency_delta'] > -0.1 and comparison['performance_delta'] > -0.05:
+    print("Candidate model approved for deployment")
 ```
 
-### 2. Validate Architecture Changes
+### Model Drift Detection
+
+Monitor production systems for behavioral changes:
 
 ```python
-# Test: Does adding a reviewer agent help?
-pipeline_a = [researcher, writer]           # γ = 1.2
-pipeline_b = [researcher, writer, reviewer] # γ = 1.45
+import cert.monitoring
 
-# Decision: γ increased by 20%, keeps the reviewer
+# Set up continuous monitoring
+monitor = cert.monitoring.create_monitor(
+    pipeline,
+    check_interval="1h",
+    baseline=production_baseline
+)
+
+# Alert on significant drift
+@monitor.on_drift
+def handle_drift(drift_report):
+    if drift_report['consistency_change'] < -0.15:
+        alert_team(f"Critical consistency drift: {drift_report}")
 ```
 
-### 3. Pre-Deployment Validation
+### Architecture Optimization
+
+Quantify improvements from architectural changes:
 
 ```python
-# Measure before deploying
-health = measure_pipeline_health(pipeline)
+# Test architectural variations
+architectures = [
+    simple_sequential_pipeline,
+    parallel_processing_pipeline,
+    hierarchical_pipeline
+]
 
-if health > 0.80:
-    deploy_to_production()
-elif health > 0.60:
-    deploy_with_enhanced_monitoring()
-else:
-    investigate_issues()
+results = await cert.benchmark_architectures(
+    architectures,
+    test_suite=benchmark_cases
+)
+
+best = max(results, key=lambda r: r['health_score'])
+print(f"Optimal architecture: {best['name']}")
+print(f"Health score: {best['health_score']:.3f}")
 ```
-
----
-
-## Mathematical Implementation
-
-CERT implements the exact formulas from the validation paper:
-
-### Behavioral Consistency (Equation 1)
-
-```python
-def behavioral_consistency(semantic_distances):
-    """
-    C = 1 - (σ(d) / μ(d))
-
-    where d(rj, rk) = semantic distance between responses
-    """
-    std = np.std(semantic_distances, ddof=1)
-    mean = np.mean(semantic_distances)
-    return 1.0 - (std / mean)
-```
-
-### Context Propagation Effect (Equation 3)
-
-```python
-def coordination_effect(coordinated_perf, independent_perfs):
-    """
-    γ = P_sequential / ∏(P_independent_i)
-
-    Measures performance change from sequential context accumulation.
-    Function name retained for API compatibility.
-    """
-    return coordinated_perf / np.prod(independent_perfs)
-```
-
-### Pipeline Health (Equation 7)
-
-```python
-def pipeline_health_score(epsilon, gamma_mean, observability_coverage):
-    """
-    H = (1/(1+ε)) × min(1,γ̄) × C_obs
-
-    Composite metric for operational decisions
-    """
-    accuracy = 1.0 / (1.0 + epsilon)
-    context_factor = min(1.0, gamma_mean)
-    return accuracy * context_factor * observability_coverage
-```
-
-**See:** `src/cert/core/metrics.py` for complete implementations with docstrings and validation.
-
----
 
 ## API Reference
 
-### High-Level Measurement
+### Providers
+
+Create model providers for measurement:
 
 ```python
-# Measure everything
-results = await cert.measure_agent(provider, n_consistency_trials=10)
-# Returns: {'consistency': 0.85, 'mean_performance': 0.70, 'std_performance': 0.05}
-
-# Individual metrics
-consistency = await cert.measure_consistency(provider, n_trials=10)
-mu, sigma = await cert.measure_performance(provider)
-
-# Custom baseline for specific domain
-consistency, mu, sigma = await cert.measure_custom_baseline(
-    provider=provider,
-    prompts=domain_specific_prompts,
-    domain_keywords=domain_keywords
+provider = cert.create_provider(
+    model_name: str,           # Model identifier (e.g., "gpt-4o", "claude-3-opus")
+    api_key: str,              # API authentication key
+    temperature: float = 0.7,  # Sampling temperature
+    max_tokens: int = 1000,    # Maximum output tokens
+    **kwargs                   # Additional provider-specific parameters
 )
 ```
 
-### Low-Level Calculations
+### Measurement Functions
+
+#### `measure_agent()`
+
+Measure consistency and performance for a single agent:
 
 ```python
-# Direct metric calculations
-from cert.core.metrics import (
-    behavioral_consistency,
-    coordination_effect,
-    pipeline_health_score
+results = await cert.measure_agent(
+    provider: Provider,
+    n_consistency_trials: int = 10,
+    input_samples: List[str] = None,
+    metrics: List[str] = ["consistency", "performance"]
+) -> Dict[str, float]
+```
+
+#### `measure_pipeline()`
+
+Evaluate multi-stage sequential pipelines:
+
+```python
+results = await cert.measure_pipeline(
+    pipeline: Pipeline,
+    input_samples: List[str],
+    n_trials: int = 5,
+    measure_stages: bool = True
+) -> Dict[str, Any]
+```
+
+#### `establish_baseline()`
+
+Create baseline measurements for comparison:
+
+```python
+baseline = await cert.establish_baseline(
+    provider: Provider,
+    test_suite: List[TestCase],
+    n_trials: int = 10,
+    save_path: str = None
+) -> Baseline
+```
+
+### Pipeline Health Assessment
+
+```python
+health = await cert.assess_pipeline_health(
+    pipeline: Pipeline,
+    baseline: Baseline = None,
+    thresholds: Dict[str, float] = None
+) -> HealthReport
+```
+
+## Configuration
+
+Configure CERT using environment variables or a configuration file:
+
+```python
+# Environment variables
+export CERT_LOG_LEVEL=INFO
+export CERT_METRICS_BACKEND=prometheus
+export CERT_CACHE_DIR=/tmp/cert_cache
+
+# Or use configuration file
+cert.configure(
+    log_level="INFO",
+    metrics_backend="prometheus",
+    cache_dir="/tmp/cert_cache",
+    retry_policy={
+        "max_attempts": 3,
+        "backoff_factor": 2.0
+    }
 )
-
-# From raw measurements
-c = behavioral_consistency(semantic_distances)
-gamma = coordination_effect(coordinated=0.75, independent=[0.60, 0.65])
-health = pipeline_health_score(epsilon=0.15, gamma_mean=1.35, observability_coverage=0.95)
 ```
 
-### Model Registry
+## Advanced Features
+
+### Custom Metrics
+
+Define domain-specific metrics:
 
 ```python
-# Get validated baseline
-baseline = cert.ModelRegistry.get_model("gpt-4o")
+from cert.metrics import CustomMetric
 
-# List models
-cert.print_models()
-cert.print_models(provider="openai")
+class TaskAccuracy(CustomMetric):
+    def evaluate(self, output: str, expected: str) -> float:
+        # Implement custom evaluation logic
+        return compute_accuracy(output, expected)
 
-# Compare models
-from cert.utils.models import compare_models
-compare_models("gpt-4o", "gemini-3.5-pro")
+# Use custom metric
+results = await cert.measure_agent(
+    provider,
+    custom_metrics=[TaskAccuracy()]
+)
 ```
 
----
+### Batch Processing
 
-## Production Deployment
-
-### Pre-Deployment Checklist
-
-- [ ] Measure C with n≥20 trials for statistical significance
-- [ ] Verify C > 0.80 or within 10% of baseline
-- [ ] Calculate γ for your specific pipeline
-- [ ] Compute H score - require H > 0.80 for production
-- [ ] Test with actual production prompts (not synthetic)
-- [ ] Establish monitoring thresholds
-
-### Operational Thresholds
-
-| Metric | Production | Acceptable | Investigate |
-|--------|-----------|------------|-------------|
-| C | > 0.85 | 0.75 - 0.85 | < 0.75 |
-| γ | > 1.20 | 1.00 - 1.20 | < 1.00 |
-| H | > 0.80 | 0.60 - 0.80 | < 0.60 |
-
-### Monitoring
+Efficiently process large evaluation sets:
 
 ```python
-# Weekly measurement
-metrics = measure_agent(provider)
-
-# Alert on degradation
-if metrics['consistency'] < baseline.consistency - 0.10:
-    alert("Consistency degraded")
-
-if metrics['mean_performance'] < baseline.mean_performance - 0.05:
-    alert("Mean performance dropped")
+results = await cert.batch_evaluate(
+    provider,
+    inputs=large_test_set,
+    batch_size=50,
+    parallel_workers=5
+)
 ```
 
----
+### Experiment Tracking
 
-## Examples
+Integrate with experiment tracking systems:
 
-### Quick Start
-```bash
-jupyter notebook examples/basic_usage.ipynb
-```
-- Measure individual agent
-- Compare to validated baseline
-- 2-3 minutes
+```python
+from cert.tracking import MLflowTracker
 
-### Real Pipeline
-```bash
-jupyter notebook examples/langchain_research_writer_pipeline.ipynb
-```
-- 3-agent sequential pipeline
-- LangChain integration
-- Health score calculation
-- 5-10 minutes
+tracker = MLflowTracker(experiment_name="model-validation")
 
-### Custom Domain
-```bash
-jupyter notebook examples/advanced_usage.ipynb
-```
-- Domain-specific baselines (Healthcare, Legal, Finance)
-- Custom quality scoring
-- 10-15 minutes
-
----
-
-## Limitations
-
-CERT measures statistical variance and context accumulation effects. It does **not**:
-
-- ❌ Explain *why* sequential context helps (black box measurement)
-- ❌ Detect genuine agent collaboration or planning
-- ❌ Measure intelligence or reasoning capabilities
-- ❌ Predict performance on novel tasks outside validation domain
-- ❌ Address fundamental LLM limitations (hallucination, reasoning, etc.)
-
-CERT provides:
-
-- ✅ Statistical characterization of output variance
-- ✅ Quantification of sequential context effects
-- ✅ Operational metrics for deployment decisions
-- ✅ Drift detection for production systems
-- ✅ Architecture comparison framework
-
----
-
-## FAQ
-
-**Q: What does γ > 1 actually mean?**
-A: When models process accumulated context in sequential pipelines, output quality is higher than if they processed inputs independently. This measures how attention mechanisms handle extended context, not coordination or intelligence.
-
-**Q: Why does more context sometimes hurt (γ < 1)?**
-A: Context window limitations, attention dilution, or prompt structure issues. CERT detects this, doesn't explain it.
-
-**Q: Can CERT detect prompt injection or jailbreaks?**
-A: No. CERT measures statistical variance, not semantic content or safety.
-
-**Q: How accurate are the baseline predictions?**
-A: GPT-4: ε = 0.003 (highly accurate). Results vary by model - see Table 2 in paper.
-
-**Q: Does CERT work with non-English languages?**
-A: Semantic distance calculations work across languages, but baselines were validated on English analytical tasks only.
-
-**Q: Measurement overhead?**
-A: ~100ms for calculations. LLM calls dominate (same cost as normal operation).
-
----
-
-## Citation
-
-If you use CERT in production systems or research:
-
-```bibtex
-@article{marin2025cert,
-  title={CERT: Instrumentation and Metrics for Production LLM Sequential Processing},
-  author={Marín, Javier},
-  journal={arXiv preprint},
-  year={2025}
-}
+with tracker.track():
+    results = await cert.measure_agent(provider)
+    tracker.log_metrics(results)
+    tracker.log_artifacts({"baseline": baseline_data})
 ```
 
----
+## Empirical Baselines
 
-## Support
+CERT includes empirical baseline measurements for popular models:
 
-- 📘 **Documentation**: [/docs](docs/)
-- 💬 **Issues**: [GitHub Issues](https://github.com/Javihaus/CERT/issues)
-- 📄 **Paper**: "CERT: Instrumentation and Metrics for Production LLM Sequential Processing" (Marín, 2025)
+```python
+# Access pre-computed baselines
+baseline = cert.baselines.get("gpt-4o", task_type="general")
+print(f"Expected consistency: {baseline['consistency_range']}")
 
----
+# Compare against baseline
+results = await cert.measure_agent(provider)
+delta = results['consistency'] - baseline['consistency_mean']
+
+if abs(delta) > baseline['consistency_std'] * 2:
+    print("Warning: Significant deviation from expected behavior")
+```
+
+Available baselines:
+- GPT-4o, GPT-4 Turbo, GPT-3.5 Turbo
+- Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku
+- Gemini 1.5 Pro, Gemini 1.5 Flash
+- Llama 3 70B, Llama 3 8B
+
+## Contributing
+
+We welcome contributions to CERT. Please see our [contributing guidelines](CONTRIBUTING.md) for details on:
+
+- Reporting bugs and requesting features
+- Submitting pull requests
+- Development setup and testing
+- Code style and documentation standards
 
 ## License
 
-MIT License - see [LICENSE](LICENSE)
+CERT is released under the MIT License. See [LICENSE](LICENSE) for details.
 
----
+## Support
 
-<div align="center">
+- Documentation: [https://cert-sdk.readthedocs.io](https://cert-sdk.readthedocs.io)
+- Issues: [https://github.com/Javihaus/CERT/issues](https://github.com/Javihaus/CERT/issues)
+- Discussions: [https://github.com/Javihaus/CERT/discussions](https://github.com/Javihaus/CERT/discussions)
 
-**Engineering infrastructure for production multi-model LLM sequential processing**
+## Citation
 
-[Get Started](#five-minute-test) • [Examples](#examples) • [API Docs](#api-reference)
+If you use CERT in your research, please cite:
 
-</div>
+```bibtex
+@software{cert_sdk,
+  title = {CERT: Consistency, Effect, and Reliability Tracking for LLM Systems},
+  author = {CERT Contributors},
+  year = {2024},
+  url = {https://github.com/Javihaus/CERT}
+}
+```
