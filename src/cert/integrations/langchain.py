@@ -270,8 +270,8 @@ class CERTLangChain(CERTIntegration):
 
     def _extract_input(self, args: tuple, kwargs: dict) -> str:
         """Extract input text from agent arguments."""
-        # LangChain pattern: {"messages": [...]}
         if args and isinstance(args[0], dict):
+            # Pattern 1: LangChain messages format: {"messages": [...]}
             messages = args[0].get("messages", [])
             if messages:
                 # Get the last user message
@@ -282,12 +282,16 @@ class CERTLangChain(CERTIntegration):
                 else:
                     return str(messages[-1])
 
+            # Pattern 2: LCEL chain format: {"input": "..."}
+            if "input" in args[0]:
+                return str(args[0]["input"])
+
         # Fallback
         return str(args[0]) if args else ""
 
     def _extract_output(self, result: Any) -> str:
         """Extract output text from agent result."""
-        # LangChain result is typically a dict with messages
+        # Pattern 1: LangChain messages format: {"messages": [...]}
         if isinstance(result, dict):
             messages = result.get("messages", [])
             if messages:
@@ -299,6 +303,10 @@ class CERTLangChain(CERTIntegration):
                     return last_msg.content
                 else:
                     return str(last_msg)
+
+        # Pattern 2: LCEL chain result: AIMessage object
+        if hasattr(result, "content"):
+            return str(result.content)
 
         # Fallback
         return str(result)
