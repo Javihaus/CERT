@@ -59,21 +59,19 @@ class OpenAIProvider(ProviderInterface):
 
         # Validate model is an OpenAI model
         if not self._is_openai_model(config.model_name):
-            raise ValueError(
-                f"Model {config.model_name} is not a recognized OpenAI model. "
-                f"Supported: gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo"
+            # Warning instead of error - let OpenAI API validate
+            import warnings
+            warnings.warn(
+                f"Model '{config.model_name}' not in known OpenAI models list. "
+                f"Will attempt to use it anyway. If it fails, check available models "
+                f"with: openai.models.list() or cert.list_openai_models()"
             )
 
     def _is_openai_model(self, model_name: str) -> bool:
-        """Check if model name is a valid OpenAI model."""
-        openai_models = {
-            "gpt-4o",
-            "gpt-4o-mini",
-            "gpt-4-turbo",
-            "gpt-4",
-            "gpt-3.5-turbo",
-        }
-        return any(model_name.startswith(m) for m in openai_models)
+        """Check if model name looks like an OpenAI model."""
+        # Accept any model starting with gpt, o1, davinci, or containing openai
+        openai_patterns = ["gpt", "o1", "davinci", "text-", "chatgpt"]
+        return any(model_name.lower().startswith(p) for p in openai_patterns)
 
     def get_baseline(self) -> Optional[ProviderBaseline]:
         """
