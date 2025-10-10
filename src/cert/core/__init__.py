@@ -7,9 +7,13 @@ from cert.core.metrics import (
     performance_baseline,
     prediction_error,
     pipeline_health_score,
+    performance_variability,
 )
-from cert.core.observability import ObservabilityTracker, observability_coverage
-from cert.core.pipeline import Pipeline, PipelineConfig
+
+# Note: ObservabilityTracker and Pipeline modules not yet implemented
+# These will be available in a future release
+# from cert.core.observability import ObservabilityTracker, observability_coverage
+# from cert.core.pipeline import Pipeline, PipelineConfig
 
 __all__ = [
     "behavioral_consistency",
@@ -18,8 +22,9 @@ __all__ = [
     "performance_baseline",
     "prediction_error",
     "pipeline_health_score",
-    "ObservabilityTracker",
-    "observability_coverage",
-    "Pipeline",
-    "PipelineConfig",
+    "performance_variability",
+    # "ObservabilityTracker",
+    # "observability_coverage",
+    # "Pipeline",
+    # "PipelineConfig",
 ]
