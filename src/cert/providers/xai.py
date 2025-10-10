@@ -8,17 +8,20 @@ Note: xAI uses OpenAI-compatible API, so this implementation wraps
 the OpenAI client with xAI-specific configuration.
 """
 
-from typing import List, Optional, Any
 import asyncio
-from openai import AsyncOpenAI, OpenAIError, RateLimitError as OpenAIRateLimitError
+from typing import Any, List, Optional
+
+from openai import AsyncOpenAI, OpenAIError
+from openai import RateLimitError as OpenAIRateLimitError
+
+from cert.models import ModelRegistry
 from cert.providers.base import (
-    ProviderInterface,
-    ProviderConfig,
-    ProviderBaseline,
     APIError,
+    ProviderBaseline,
+    ProviderConfig,
+    ProviderInterface,
     RateLimitError,
 )
-from cert.models import ModelRegistry
 
 
 class XAIProvider(ProviderInterface):
@@ -262,5 +265,5 @@ class XAIProvider(ProviderInterface):
     def __repr__(self) -> str:
         """String representation."""
         baseline = self.get_baseline()
-        baseline_str = f", validated" if baseline else ", not validated"
+        baseline_str = ", validated" if baseline else ", not validated"
         return f"XAIProvider(model={self.config.model_name}{baseline_str})"

@@ -5,13 +5,13 @@ Provides instrumentation for CrewAI agents and crews with automatic
 CERT metrics tracking.
 """
 
-from typing import Any, Dict, List, Optional
 import time
+from typing import Any, Dict, List, Optional
 
-from cert.integrations.base import CERTIntegration, PipelineMetrics
-from cert.providers.base import ProviderInterface
-from cert.models import ModelBaseline
 from cert.analysis.quality import QualityScorer
+from cert.integrations.base import CERTIntegration
+from cert.models import ModelBaseline
+from cert.providers.base import ProviderInterface
 
 
 class CERTCrewAI(CERTIntegration):
@@ -115,7 +115,7 @@ class CERTCrewAI(CERTIntegration):
         """
         # CrewAI agents are instrumented at the crew level
         # Store agent info for tracking
-        if not hasattr(self, '_agent_info'):
+        if not hasattr(self, "_agent_info"):
             self._agent_info = {}
 
         self._agent_info[agent_id] = {
@@ -174,9 +174,9 @@ class CERTCrewAI(CERTIntegration):
         self._task_outputs = []
 
         if self.verbose:
-            print(f"\n{'='*70}")
-            print(f"CERT: Starting CrewAI Crew Execution")
-            print(f"{'='*70}")
+            print(f"\n{'=' * 70}")
+            print("CERT: Starting CrewAI Crew Execution")
+            print(f"{'=' * 70}")
             print(f"Agents: {len(crew.agents)}")
             print(f"Tasks: {len(crew.tasks)}")
 
@@ -202,9 +202,9 @@ class CERTCrewAI(CERTIntegration):
         duration_ms = (time.time() - start_time) * 1000
 
         if self.verbose:
-            print(f"\n{'='*70}")
+            print(f"\n{'=' * 70}")
             print(f"CERT: Crew Execution Complete ({duration_ms:.0f}ms)")
-            print(f"{'='*70}")
+            print(f"{'=' * 70}")
 
         # Extract final output
         final_output = self._extract_result(result)
@@ -233,12 +233,14 @@ class CERTCrewAI(CERTIntegration):
     def _wrap_task(self, task: Any, task_index: int) -> Any:
         """Wrap a task to track execution."""
         # Store original callback
-        original_callback = getattr(task, 'callback', None)
+        original_callback = getattr(task, "callback", None)
 
         def cert_callback(task_output):
             """CERT instrumented callback."""
             # Extract task information
-            agent_name = task.agent.role if hasattr(task, 'agent') and task.agent else f"Agent_{task_index}"
+            agent_name = (
+                task.agent.role if hasattr(task, "agent") and task.agent else f"Agent_{task_index}"
+            )
             agent_id = f"agent_{task_index}"
 
             # Extract output
@@ -255,7 +257,7 @@ class CERTCrewAI(CERTIntegration):
                 metadata={
                     "task_index": task_index,
                     "expected_output": task.expected_output,
-                }
+                },
             )
 
             # Calculate quality
@@ -296,13 +298,13 @@ class CERTCrewAI(CERTIntegration):
         # CrewAI result can be various types
         if isinstance(result, str):
             return result
-        elif hasattr(result, 'raw'):
+        if hasattr(result, "raw"):
             return str(result.raw)
-        elif hasattr(result, 'output'):
+        if hasattr(result, "output"):
             return str(result.output)
-        elif isinstance(result, dict):
+        if isinstance(result, dict):
             # Try common keys
-            for key in ['output', 'result', 'final_output', 'text']:
+            for key in ["output", "result", "final_output", "text"]:
                 if key in result:
                     return str(result[key])
 
@@ -313,23 +315,19 @@ class CERTCrewAI(CERTIntegration):
         """Extract output text from task output."""
         if isinstance(task_output, str):
             return task_output
-        elif hasattr(task_output, 'raw'):
+        if hasattr(task_output, "raw"):
             return str(task_output.raw)
-        elif hasattr(task_output, 'output'):
+        if hasattr(task_output, "output"):
             return str(task_output.output)
-        elif isinstance(task_output, dict):
-            for key in ['output', 'result', 'text']:
+        if isinstance(task_output, dict):
+            for key in ["output", "result", "text"]:
                 if key in task_output:
                     return str(task_output[key])
 
         return str(task_output)
 
     def create_instrumented_crew(
-        self,
-        agents: List[Any],
-        tasks: List[Any],
-        verbose: bool = False,
-        **crew_kwargs
+        self, agents: List[Any], tasks: List[Any], verbose: bool = False, **crew_kwargs
     ) -> Any:
         """
         Create a CrewAI Crew with automatic CERT instrumentation.
@@ -356,17 +354,10 @@ class CERTCrewAI(CERTIntegration):
         try:
             from crewai import Crew
         except ImportError:
-            raise ImportError(
-                "CrewAI is not installed. Install it with: pip install crewai"
-            )
+            raise ImportError("CrewAI is not installed. Install it with: pip install crewai")
 
         # Create crew
-        crew = Crew(
-            agents=agents,
-            tasks=tasks,
-            verbose=verbose,
-            **crew_kwargs
-        )
+        crew = Crew(agents=agents, tasks=tasks, verbose=verbose, **crew_kwargs)
 
         # Wrap with instrumentation
         return self.wrap_crew(crew)

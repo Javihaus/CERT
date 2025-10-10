@@ -1,14 +1,14 @@
 """Analysis utilities for semantic similarity and quality scoring."""
 
-from cert.analysis.semantic import semantic_distance, batch_semantic_distance
-from cert.analysis.quality import quality_score, QualityComponents
-from cert.analysis.statistics import welch_t_test, cohen_d
+from cert.analysis.quality import QualityComponents, quality_score
+from cert.analysis.semantic import batch_semantic_distance, semantic_distance
+from cert.analysis.statistics import cohen_d, welch_t_test
 
 __all__ = [
-    "semantic_distance",
-    "batch_semantic_distance",
-    "quality_score",
     "QualityComponents",
-    "welch_t_test",
+    "batch_semantic_distance",
     "cohen_d",
+    "quality_score",
+    "semantic_distance",
+    "welch_t_test",
 ]

@@ -5,16 +5,18 @@ These functions provide simple, one-line interfaces to measure
 agent consistency, performance, and coordination effects.
 """
 
-from typing import Optional, Tuple, Set, List
-from cert.providers.base import ProviderInterface
-from cert.models import ModelBaseline
-from cert.analysis.semantic import SemanticAnalyzer
+from typing import List, Optional, Set, Tuple
+
+import numpy as np
+
 from cert.analysis.quality import QualityScorer
+from cert.analysis.semantic import SemanticAnalyzer
 from cert.core.metrics import (
     behavioral_consistency,
     empirical_performance_distribution,
 )
-import numpy as np
+from cert.models import ModelBaseline
+from cert.providers.base import ProviderInterface
 
 
 async def measure_consistency(
@@ -50,9 +52,9 @@ async def measure_consistency(
         >>> print(f"Consistency: {consistency:.3f}")
     """
     if verbose:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("Measuring Behavioral Consistency")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print(f"\nGenerating {n_trials} responses...")
         print(f"Prompt: '{prompt}'")
 
@@ -65,7 +67,7 @@ async def measure_consistency(
         )
         responses.append(response)
         if verbose:
-            print(f"  Response {i+1}/{n_trials} ({len(response)} chars)")
+            print(f"  Response {i + 1}/{n_trials} ({len(response)} chars)")
 
     # Calculate consistency
     if verbose:
@@ -77,9 +79,9 @@ async def measure_consistency(
 
     # Show results
     if verbose:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("Results:")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print(f"Consistency: C = {consistency:.3f}")
 
         if baseline:
@@ -93,7 +95,7 @@ async def measure_consistency(
                 status = "↓ Lower than baseline"
             print(f"Difference:  {diff:+.3f} ({status})")
 
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
     return consistency
 
@@ -139,9 +141,9 @@ async def measure_performance(
         ]
 
     if verbose:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("Measuring Performance Distribution")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print(f"\nGenerating responses for {len(prompts)} prompts...")
 
     # Generate and score responses
@@ -158,24 +160,26 @@ async def measure_performance(
         quality_scores.append(components.composite_score)
 
         if verbose:
-            print(f"  Prompt {i+1}: Q = {components.composite_score:.3f}")
+            print(f"  Prompt {i + 1}: Q = {components.composite_score:.3f}")
 
     # Calculate distribution
     mu, sigma = empirical_performance_distribution(np.array(quality_scores))
 
     # Show results
     if verbose:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("Results:")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print(f"Performance: μ = {mu:.3f}, σ = {sigma:.3f}")
 
         if baseline:
-            print(f"Baseline:    μ = {baseline.mean_performance:.3f}, σ = {baseline.std_performance:.3f}")
+            print(
+                f"Baseline:    μ = {baseline.mean_performance:.3f}, σ = {baseline.std_performance:.3f}"
+            )
             mu_diff = mu - baseline.mean_performance
             print(f"Difference:  μ {mu_diff:+.3f}")
 
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
     return mu, sigma
 
@@ -209,12 +213,12 @@ async def measure_agent(
         >>> print(f"Performance: μ={results['mean_performance']:.3f}")
     """
     if verbose:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("CERT Agent Measurement")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print("\nMeasuring agent behavioral consistency and performance...")
         print(f"Estimated time: {(n_consistency_trials + 5) * 2} seconds")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
     # Measure consistency
     consistency = await measure_consistency(
@@ -233,18 +237,22 @@ async def measure_agent(
 
     # Summary
     if verbose:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("Summary")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
         print(f"Consistency:   C = {consistency:.3f}")
         print(f"Performance:   μ = {mu:.3f}, σ = {sigma:.3f}")
 
         if baseline:
-            print(f"\nCompared to baseline:")
-            print(f"  Consistency:   {baseline.consistency:.3f} ({consistency - baseline.consistency:+.3f})")
-            print(f"  Performance:   {baseline.mean_performance:.3f} ({mu - baseline.mean_performance:+.3f})")
+            print("\nCompared to baseline:")
+            print(
+                f"  Consistency:   {baseline.consistency:.3f} ({consistency - baseline.consistency:+.3f})"
+            )
+            print(
+                f"  Performance:   {baseline.mean_performance:.3f} ({mu - baseline.mean_performance:+.3f})"
+            )
 
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
     return {
         "consistency": consistency,
@@ -299,9 +307,9 @@ async def measure_custom_baseline(
         ... )
     """
     if verbose:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Custom Domain Baseline Measurement")
-        print("="*70)
+        print("=" * 70)
         print(f"\nModel: {provider.config.model_name}")
         print(f"Consistency trials: {n_consistency_trials}")
         print(f"Performance prompts: {len(prompts)}")
@@ -322,7 +330,7 @@ async def measure_custom_baseline(
         )
         responses.append(response)
         if verbose and (i + 1) % 5 == 0:
-            print(f"    Progress: {i+1}/{n_consistency_trials}")
+            print(f"    Progress: {i + 1}/{n_consistency_trials}")
 
     # Calculate consistency
     analyzer = SemanticAnalyzer()
@@ -344,7 +352,7 @@ async def measure_custom_baseline(
     else:
         scorer = QualityScorer()
         if verbose:
-            print(f"  Using default analytical keywords")
+            print("  Using default analytical keywords")
 
     quality_scores = []
     for i, prompt in enumerate(prompts):
@@ -357,7 +365,7 @@ async def measure_custom_baseline(
         quality_scores.append(components.composite_score)
 
         if verbose:
-            print(f"    Prompt {i+1}/{len(prompts)}: Q = {components.composite_score:.3f}")
+            print(f"    Prompt {i + 1}/{len(prompts)}: Q = {components.composite_score:.3f}")
 
     # Calculate distribution
     mu, sigma = empirical_performance_distribution(np.array(quality_scores))
@@ -367,12 +375,12 @@ async def measure_custom_baseline(
 
     # Summary
     if verbose:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Custom Baseline Results")
-        print("="*70)
+        print("=" * 70)
         print(f"Consistency:   C = {consistency:.3f}")
         print(f"Mean:          μ = {mu:.3f}")
         print(f"Std Dev:       σ = {sigma:.3f}")
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")
 
     return consistency, mu, sigma

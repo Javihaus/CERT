@@ -6,10 +6,10 @@ and response variability as specified in CERT framework.
 """
 
 from typing import List, Optional
+
 import numpy as np
 from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
-from functools import lru_cache
 
 
 class SemanticAnalyzer:

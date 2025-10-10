@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Setup script for CERT SDK.
 
@@ -9,8 +8,9 @@ This setup.py provides compatibility for tools that don't support pyproject.toml
 For modern installations, pyproject.toml is the preferred configuration.
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read README for long description
 readme_file = Path(__file__).parent / "README.md"

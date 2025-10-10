@@ -5,14 +5,13 @@ Provides instrumentation for LangChain agents and LangGraph multi-agent pipeline
 with automatic CERT metrics tracking.
 """
 
-from typing import Any, Dict, List, Optional, Callable
 import time
-from functools import wraps
+from typing import Any, Callable, Dict, List, Optional
 
-from cert.integrations.base import CERTIntegration, PipelineMetrics
-from cert.providers.base import ProviderInterface
-from cert.models import ModelBaseline
 from cert.analysis.quality import QualityScorer
+from cert.integrations.base import CERTIntegration
+from cert.models import ModelBaseline
+from cert.providers.base import ProviderInterface
 
 
 class CERTLangChain(CERTIntegration):
@@ -277,10 +276,9 @@ class CERTLangChain(CERTIntegration):
                 # Get the last user message
                 if isinstance(messages[-1], dict):
                     return messages[-1].get("content", "")
-                elif hasattr(messages[-1], "content"):
+                if hasattr(messages[-1], "content"):
                     return messages[-1].content
-                else:
-                    return str(messages[-1])
+                return str(messages[-1])
 
             # Pattern 2: LCEL chain format: {"input": "..."}
             if "input" in args[0]:
@@ -299,10 +297,9 @@ class CERTLangChain(CERTIntegration):
                 last_msg = messages[-1]
                 if isinstance(last_msg, dict):
                     return last_msg.get("content", "")
-                elif hasattr(last_msg, "content"):
+                if hasattr(last_msg, "content"):
                     return last_msg.content
-                else:
-                    return str(last_msg)
+                return str(last_msg)
 
         # Pattern 2: LCEL chain result: AIMessage object
         if hasattr(result, "content"):

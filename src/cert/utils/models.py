@@ -6,7 +6,8 @@ and provider information.
 """
 
 from typing import Dict, List, Optional
-from cert.models import ModelRegistry, ModelBaseline
+
+from cert.models import ModelBaseline, ModelRegistry
 
 
 def list_models(provider: Optional[str] = None) -> List[ModelBaseline]:
@@ -70,7 +71,7 @@ def print_models(provider: Optional[str] = None, detailed: bool = True) -> None:
         providers[model.provider].append(model)
 
     if not providers:
-        print(f"⚠ No models found" + (f" for provider '{provider}'" if provider else ""))
+        print("⚠ No models found" + (f" for provider '{provider}'" if provider else ""))
         print("\nAvailable providers:", ", ".join(ModelRegistry.list_providers()))
         return
 
@@ -82,7 +83,9 @@ def print_models(provider: Optional[str] = None, detailed: bool = True) -> None:
         for model in sorted(providers[provider_name], key=lambda m: m.model_id):
             print(f"  • {model.model_family}")
             print(f"    model_id: {model.model_id}")
-            print(f"    Baseline: C={model.consistency:.3f}, μ={model.mean_performance:.3f}, σ={model.std_performance:.3f}")
+            print(
+                f"    Baseline: C={model.consistency:.3f}, μ={model.mean_performance:.3f}, σ={model.std_performance:.3f}"
+            )
 
             if detailed:
                 if model.coordination_2agent:
@@ -134,7 +137,7 @@ def get_model_info(model_id: str) -> None:
     print(f"  Std Performance (σ):    {baseline.std_performance:.3f}")
 
     if baseline.coordination_2agent:
-        print(f"\nCoordination Effects:")
+        print("\nCoordination Effects:")
         print(f"  2-agent γ:              {baseline.coordination_2agent:.3f}")
         if baseline.coordination_5agent:
             print(f"  5-agent γ:              {baseline.coordination_5agent:.3f}")
@@ -160,20 +163,26 @@ def get_model_info(model_id: str) -> None:
 
     if baseline.coordination_2agent:
         if baseline.coordination_2agent > 1.3:
-            print(f"  ✓ Strong coordination effect ({baseline.coordination_2agent:.3f}x) - Agents work well together")
+            print(
+                f"  ✓ Strong coordination effect ({baseline.coordination_2agent:.3f}x) - Agents work well together"
+            )
         elif baseline.coordination_2agent > 1.0:
-            print(f"  ~ Positive coordination ({baseline.coordination_2agent:.3f}x) - Some benefit from multi-agent")
+            print(
+                f"  ~ Positive coordination ({baseline.coordination_2agent:.3f}x) - Some benefit from multi-agent"
+            )
         else:
-            print(f"  ⚠ Weak coordination ({baseline.coordination_2agent:.3f}x) - Limited multi-agent benefit")
+            print(
+                f"  ⚠ Weak coordination ({baseline.coordination_2agent:.3f}x) - Limited multi-agent benefit"
+            )
 
     print("\nUsage:")
     print(f"  from cert.providers import {baseline.provider.title()}Provider")
-    print(f"  from cert.providers.base import ProviderConfig")
-    print(f"  ")
-    print(f"  config = ProviderConfig(")
-    print(f"      api_key='your-api-key',")
+    print("  from cert.providers.base import ProviderConfig")
+    print("  ")
+    print("  config = ProviderConfig(")
+    print("      api_key='your-api-key',")
     print(f"      model_name='{baseline.model_id}',")
-    print(f"  )")
+    print("  )")
     print(f"  provider = {baseline.provider.title()}Provider(config)")
 
 
@@ -266,14 +275,20 @@ def compare_models(*model_ids: str) -> None:
 
     # Best consistency
     best_consistency = max(baselines, key=lambda b: b.consistency)
-    print(f"  Most consistent: {best_consistency.model_family} (C={best_consistency.consistency:.3f})")
+    print(
+        f"  Most consistent: {best_consistency.model_family} (C={best_consistency.consistency:.3f})"
+    )
 
     # Best performance
     best_performance = max(baselines, key=lambda b: b.mean_performance)
-    print(f"  Best performance: {best_performance.model_family} (μ={best_performance.mean_performance:.3f})")
+    print(
+        f"  Best performance: {best_performance.model_family} (μ={best_performance.mean_performance:.3f})"
+    )
 
     # Best coordination
     with_coordination = [b for b in baselines if b.coordination_2agent]
     if with_coordination:
         best_coordination = max(with_coordination, key=lambda b: b.coordination_2agent or 0)
-        print(f"  Best coordination: {best_coordination.model_family} (γ={best_coordination.coordination_2agent:.3f})")
+        print(
+            f"  Best coordination: {best_coordination.model_family} (γ={best_coordination.coordination_2agent:.3f})"
+        )

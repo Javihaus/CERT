@@ -10,17 +10,18 @@ For custom models or domain-specific tasks, see advanced_usage.py
 """
 
 import asyncio
-from cert.models import ModelRegistry, get_model_baseline
-from cert.providers import OpenAIProvider, GoogleProvider, XAIProvider
-from cert.providers.base import ProviderConfig
-from cert.analysis.semantic import SemanticAnalyzer
+
+import numpy as np
+
 from cert.analysis.quality import QualityScorer
+from cert.analysis.semantic import SemanticAnalyzer
 from cert.core.metrics import (
     behavioral_consistency,
     empirical_performance_distribution,
-    coordination_effect,
 )
-import numpy as np
+from cert.models import ModelRegistry
+from cert.providers import GoogleProvider, OpenAIProvider, XAIProvider
+from cert.providers.base import ProviderConfig
 
 
 def select_model_interactive():
@@ -49,21 +50,25 @@ def select_model_interactive():
         for model in providers[provider_name]:
             print(f"  [{idx}] {model.model_family}")
             print(f"      model_id: {model.model_id}")
-            print(f"      Baseline: C={model.consistency:.3f}, μ={model.mean_performance:.3f}, σ={model.std_performance:.3f}")
+            print(
+                f"      Baseline: C={model.consistency:.3f}, μ={model.mean_performance:.3f}, σ={model.std_performance:.3f}"
+            )
             if model.coordination_2agent:
                 print(f"      2-agent γ: {model.coordination_2agent:.3f}")
             model_options.append(model)
             idx += 1
 
     print("\n" + "=" * 70)
-    print("\nSelect a model you have API access to (1-{}):".format(len(model_options)))
+    print(f"\nSelect a model you have API access to (1-{len(model_options)}):")
 
     choice = int(input("> "))
     selected_model = model_options[choice - 1]
 
     print(f"\n✓ Selected: {selected_model.model_family} ({selected_model.model_id})")
-    print(f"  Using validated baseline from paper:")
-    print(f"  C={selected_model.consistency:.3f}, μ={selected_model.mean_performance:.3f}, σ={selected_model.std_performance:.3f}\n")
+    print("  Using validated baseline from paper:")
+    print(
+        f"  C={selected_model.consistency:.3f}, μ={selected_model.mean_performance:.3f}, σ={selected_model.std_performance:.3f}\n"
+    )
 
     return selected_model
 
@@ -79,9 +84,9 @@ async def measure_behavioral_consistency_simple(provider, model_baseline, n_tria
         model_baseline: Validated baseline from registry
         n_trials: Number of trials (paper used 20, we use 10 for speed)
     """
-    print(f"\n{'='*70}")
-    print(f"Measuring Behavioral Consistency")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("Measuring Behavioral Consistency")
+    print(f"{'=' * 70}")
 
     # Standard prompt from paper's experiments
     prompt = "Analyze the key factors in effective business strategy implementation."
@@ -97,10 +102,10 @@ async def measure_behavioral_consistency_simple(provider, model_baseline, n_tria
             temperature=0.7,  # Standard temperature
         )
         responses.append(response)
-        print(f"  Response {i+1}/{n_trials} generated ({len(response)} chars)")
+        print(f"  Response {i + 1}/{n_trials} generated ({len(response)} chars)")
 
     # Calculate semantic distances
-    print(f"\nCalculating semantic distances...")
+    print("\nCalculating semantic distances...")
     analyzer = SemanticAnalyzer()
     distances = analyzer.pairwise_distances(responses)
 
@@ -108,9 +113,9 @@ async def measure_behavioral_consistency_simple(provider, model_baseline, n_tria
     consistency = behavioral_consistency(distances)
 
     # Compare to paper baseline
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Results:")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"Measured Consistency: C = {consistency:.3f}")
     print(f"Paper Baseline:       C = {model_baseline.consistency:.3f}")
 
@@ -138,9 +143,9 @@ async def measure_performance_distribution_simple(provider, model_baseline, n_tr
         model_baseline: Validated baseline from registry
         n_trials: Number of trials (paper used 15, we use 10 for speed)
     """
-    print(f"\n{'='*70}")
-    print(f"Measuring Performance Distribution")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("Measuring Performance Distribution")
+    print(f"{'=' * 70}")
 
     # Standard prompts from paper's experiments
     prompts = [
@@ -157,7 +162,7 @@ async def measure_performance_distribution_simple(provider, model_baseline, n_tr
     scorer = QualityScorer()
     quality_scores = []
 
-    for i, prompt in enumerate(prompts[:n_trials//2 + 1]):  # Use subset for speed
+    for i, prompt in enumerate(prompts[: n_trials // 2 + 1]):  # Use subset for speed
         response = await provider.generate_response(
             prompt=prompt,
             temperature=0.7,
@@ -167,20 +172,24 @@ async def measure_performance_distribution_simple(provider, model_baseline, n_tr
         components = scorer.score(prompt, response)
         quality_scores.append(components.composite_score)
 
-        print(f"  Prompt {i+1}: Q = {components.composite_score:.3f}")
-        print(f"    (semantic: {components.semantic_relevance:.3f}, "
-              f"coherence: {components.linguistic_coherence:.3f}, "
-              f"density: {components.content_density:.3f})")
+        print(f"  Prompt {i + 1}: Q = {components.composite_score:.3f}")
+        print(
+            f"    (semantic: {components.semantic_relevance:.3f}, "
+            f"coherence: {components.linguistic_coherence:.3f}, "
+            f"density: {components.content_density:.3f})"
+        )
 
     # Calculate distribution
     mu, sigma = empirical_performance_distribution(np.array(quality_scores))
 
     # Compare to paper baseline
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Results:")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"Measured Performance: μ = {mu:.3f}, σ = {sigma:.3f}")
-    print(f"Paper Baseline:       μ = {model_baseline.mean_performance:.3f}, σ = {model_baseline.std_performance:.3f}")
+    print(
+        f"Paper Baseline:       μ = {model_baseline.mean_performance:.3f}, σ = {model_baseline.std_performance:.3f}"
+    )
 
     mu_diff = mu - model_baseline.mean_performance
     print(f"Mean difference:      {mu_diff:+.3f}")
@@ -204,35 +213,35 @@ async def demonstrate_context_effect_prediction(model_baseline):
     Args:
         model_baseline: Validated baseline from registry
     """
-    print(f"\n{'='*70}")
-    print(f"Context Propagation Effect Prediction (from Paper)")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("Context Propagation Effect Prediction (from Paper)")
+    print(f"{'=' * 70}")
 
     if model_baseline.coordination_2agent:
         gamma = model_baseline.coordination_2agent
-        print(f"\nValidated 2-model sequential context effect from paper:")
+        print("\nValidated 2-model sequential context effect from paper:")
         print(f"  γ = {gamma:.3f}")
-        print(f"  (Measures: performance change from context accumulation)")
+        print("  (Measures: performance change from context accumulation)")
 
         # Calculate expected sequential processing performance
         independent_perf = model_baseline.mean_performance
         sequential_perf = independent_perf * independent_perf * gamma
 
-        print(f"\nPrediction for 2-model sequential pipeline:")
+        print("\nPrediction for 2-model sequential pipeline:")
         print(f"  Independent performance: {independent_perf:.3f}")
         print(f"  Expected sequential:     {sequential_perf:.3f}")
-        print(f"  Improvement:             {(sequential_perf/independent_perf - 1)*100:+.1f}%")
+        print(f"  Improvement:             {(sequential_perf / independent_perf - 1) * 100:+.1f}%")
 
-        print(f"\nOperational Interpretation:")
+        print("\nOperational Interpretation:")
         if gamma > 1.2:
-            print(f"  → Strong context propagation benefit")
-            print(f"  → Sequential processing architecture recommended")
+            print("  → Strong context propagation benefit")
+            print("  → Sequential processing architecture recommended")
         elif gamma > 1.0:
-            print(f"  → Moderate context propagation benefit")
-            print(f"  → Sequential processing helps but gains are modest")
+            print("  → Moderate context propagation benefit")
+            print("  → Sequential processing helps but gains are modest")
         else:
-            print(f"  → Context accumulation does not improve performance")
-            print(f"  → Consider single-model or parallel architectures")
+            print("  → Context accumulation does not improve performance")
+            print("  → Consider single-model or parallel architectures")
     else:
         print("\n⚠ 2-model context effect baseline not available for this model.")
         print("  You can measure it using sequential pipeline experiments.")
@@ -245,9 +254,9 @@ async def main():
     2. Initialize provider with API key
     3. Run measurements using validated baselines
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CERT SDK - Basic Usage with Validated Models")
-    print("="*70)
+    print("=" * 70)
 
     # Step 1: Select model from validated registry
     model_baseline = select_model_interactive()
@@ -277,9 +286,9 @@ async def main():
     print(f"\n✓ Provider initialized: {provider}")
 
     # Step 4: Run measurements
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Starting CERT Measurements")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print("\nThis will:")
     print("1. Measure behavioral consistency (10 trials)")
     print("2. Measure performance distribution (5 prompts)")
@@ -289,41 +298,39 @@ async def main():
     input()
 
     # Measure consistency
-    consistency = await measure_behavioral_consistency_simple(
-        provider, model_baseline, n_trials=10
-    )
+    consistency = await measure_behavioral_consistency_simple(provider, model_baseline, n_trials=10)
 
     # Measure performance
-    mu, sigma = await measure_performance_distribution_simple(
-        provider, model_baseline, n_trials=5
-    )
+    mu, sigma = await measure_performance_distribution_simple(provider, model_baseline, n_trials=5)
 
     # Show context propagation predictions
     await demonstrate_context_effect_prediction(model_baseline)
 
     # Summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Summary")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"\nModel: {model_baseline.model_family} ({model_baseline.model_id})")
-    print(f"\nYour Measurements:")
+    print("\nYour Measurements:")
     print(f"  Consistency:   C = {consistency:.3f}")
     print(f"  Performance:   μ = {mu:.3f}, σ = {sigma:.3f}")
-    print(f"\nPaper Baselines:")
+    print("\nPaper Baselines:")
     print(f"  Consistency:   C = {model_baseline.consistency:.3f}")
-    print(f"  Performance:   μ = {model_baseline.mean_performance:.3f}, σ = {model_baseline.std_performance:.3f}")
+    print(
+        f"  Performance:   μ = {model_baseline.mean_performance:.3f}, σ = {model_baseline.std_performance:.3f}"
+    )
 
     if model_baseline.coordination_2agent:
         print(f"  2-agent γ:     {model_baseline.coordination_2agent:.3f}")
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("✓ Basic measurements complete!")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print("\nNext steps:")
     print("  - Run more trials for statistical significance (20+ recommended)")
     print("  - Measure context effects with sequential pipelines")
     print("  - See advanced_usage.py for custom models and domain-specific tasks")
-    print(f"  - See langchain_research_writer_pipeline.ipynb for real pipeline example")
+    print("  - See langchain_research_writer_pipeline.ipynb for real pipeline example")
 
 
 if __name__ == "__main__":

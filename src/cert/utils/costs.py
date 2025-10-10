@@ -4,58 +4,29 @@ Cost estimation utilities for CERT measurements.
 Provides transparent cost estimation before running expensive calibration measurements.
 """
 
-from typing import Dict, Optional
 from dataclasses import dataclass
-
+from typing import Dict, Optional
 
 # Cost per 1M tokens (as of 2025-10-10)
 # Input/Output costs in USD
 MODEL_COSTS = {
-    "gpt-4o": {
-        "input_per_1m": 2.50,
-        "output_per_1m": 10.00,
-        "provider": "OpenAI"
-    },
-    "gpt-4o-mini": {
-        "input_per_1m": 0.150,
-        "output_per_1m": 0.600,
-        "provider": "OpenAI"
-    },
+    "gpt-4o": {"input_per_1m": 2.50, "output_per_1m": 10.00, "provider": "OpenAI"},
+    "gpt-4o-mini": {"input_per_1m": 0.150, "output_per_1m": 0.600, "provider": "OpenAI"},
     "gpt-5": {
         "input_per_1m": 5.00,  # Estimated
         "output_per_1m": 15.00,  # Estimated
-        "provider": "OpenAI"
+        "provider": "OpenAI",
     },
     "chatgpt-5": {  # Alias
         "input_per_1m": 5.00,
         "output_per_1m": 15.00,
-        "provider": "OpenAI"
+        "provider": "OpenAI",
     },
-    "claude-3-5-haiku": {
-        "input_per_1m": 0.80,
-        "output_per_1m": 4.00,
-        "provider": "Anthropic"
-    },
-    "claude-sonnet-4.5": {
-        "input_per_1m": 3.00,
-        "output_per_1m": 15.00,
-        "provider": "Anthropic"
-    },
-    "claude-3-5-sonnet": {
-        "input_per_1m": 3.00,
-        "output_per_1m": 15.00,
-        "provider": "Anthropic"
-    },
-    "gemini-3.5-pro": {
-        "input_per_1m": 1.25,
-        "output_per_1m": 5.00,
-        "provider": "Google"
-    },
-    "grok-3": {
-        "input_per_1m": 2.00,
-        "output_per_1m": 10.00,
-        "provider": "xAI"
-    },
+    "claude-3-5-haiku": {"input_per_1m": 0.80, "output_per_1m": 4.00, "provider": "Anthropic"},
+    "claude-sonnet-4.5": {"input_per_1m": 3.00, "output_per_1m": 15.00, "provider": "Anthropic"},
+    "claude-3-5-sonnet": {"input_per_1m": 3.00, "output_per_1m": 15.00, "provider": "Anthropic"},
+    "gemini-3.5-pro": {"input_per_1m": 1.25, "output_per_1m": 5.00, "provider": "Google"},
+    "grok-3": {"input_per_1m": 2.00, "output_per_1m": 10.00, "provider": "xAI"},
 }
 
 
@@ -81,20 +52,22 @@ class CostEstimate:
             f"{'=' * 60}",
             f"Model: {self.model_name}",
             f"API Calls: {self.n_api_calls}",
-            f"",
-            f"Tokens:",
+            "",
+            "Tokens:",
             f"  Input:  {self.input_tokens:,} tokens (${self.input_cost_usd:.4f})",
             f"  Output: {self.output_tokens:,} tokens (${self.output_cost_usd:.4f})",
             f"  Total:  {self.total_tokens:,} tokens",
-            f"",
+            "",
             f"Estimated Cost: ${self.total_cost_usd:.4f}",
         ]
 
         if self.warning:
-            lines.extend([
-                f"",
-                f"⚠️  WARNING: {self.warning}",
-            ])
+            lines.extend(
+                [
+                    "",
+                    f"⚠️  WARNING: {self.warning}",
+                ]
+            )
 
         return "\n".join(lines)
 
@@ -129,11 +102,7 @@ def estimate_calibration_cost(
     # Get model costs
     if model_name not in MODEL_COSTS:
         # Use average costs as fallback
-        costs = {
-            "input_per_1m": 2.00,
-            "output_per_1m": 10.00,
-            "provider": "Unknown"
-        }
+        costs = {"input_per_1m": 2.00, "output_per_1m": 10.00, "provider": "Unknown"}
         warning = f"Unknown model '{model_name}'. Using average pricing."
     else:
         costs = MODEL_COSTS[model_name]
@@ -210,11 +179,7 @@ def estimate_monitoring_cost(
 
     # Get model costs
     if model_name not in MODEL_COSTS:
-        costs = {
-            "input_per_1m": 2.00,
-            "output_per_1m": 10.00,
-            "provider": "Unknown"
-        }
+        costs = {"input_per_1m": 2.00, "output_per_1m": 10.00, "provider": "Unknown"}
         warning = f"Unknown model '{model_name}'. Using average pricing."
     else:
         costs = MODEL_COSTS[model_name]
@@ -237,7 +202,7 @@ def estimate_monitoring_cost(
     total_cost = input_cost + output_cost
 
     # Add context about monitoring overhead
-    overhead_pct = (sample_rate * 100)
+    overhead_pct = sample_rate * 100
     measurement_type = f"Production Monitoring (Daily, {overhead_pct:.1f}% sample rate)"
 
     return CostEstimate(
@@ -295,7 +260,7 @@ def estimate_pipeline_cost(
                 "input_per_1m": 2.00,
                 "output_per_1m": 10.00,
             }
-            warnings.append(f"Agent {i+1}: Unknown model '{model_name}'")
+            warnings.append(f"Agent {i + 1}: Unknown model '{model_name}'")
         else:
             costs = MODEL_COSTS[model_name]
 
@@ -303,10 +268,9 @@ def estimate_pipeline_cost(
         input_tokens = n_trials * avg_input_tokens_per_agent
         output_tokens = n_trials * avg_output_tokens_per_agent
 
-        agent_cost = (
-            (input_tokens / 1_000_000) * costs["input_per_1m"] +
-            (output_tokens / 1_000_000) * costs["output_per_1m"]
-        )
+        agent_cost = (input_tokens / 1_000_000) * costs["input_per_1m"] + (
+            output_tokens / 1_000_000
+        ) * costs["output_per_1m"]
 
         total_input_tokens += input_tokens
         total_output_tokens += output_tokens

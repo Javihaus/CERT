@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Smoke test: Does CERT SDK install and run?
 
 This is the five-minute test - if this fails, nothing else matters.
 """
-import subprocess
+
 import sys
 
 
 def test_import_works():
     """Can we import cert after installation?"""
     import cert
+
     assert cert is not None
 
 
@@ -41,6 +41,7 @@ def test_list_models():
 def test_metrics_work_without_api():
     """Can we calculate metrics with fake data?"""
     import numpy as np
+
     from cert.core.metrics import (
         behavioral_consistency,
         coordination_effect,
@@ -59,11 +60,7 @@ def test_metrics_work_without_api():
     assert gamma > 0
 
     # Fake health score
-    health = pipeline_health_score(
-        epsilon=0.1,
-        gamma_mean=1.2,
-        observability_coverage=0.9
-    )
+    health = pipeline_health_score(epsilon=0.1, gamma_mean=1.2, observability_coverage=0.9)
     assert 0.0 <= health <= 1.0
 
 

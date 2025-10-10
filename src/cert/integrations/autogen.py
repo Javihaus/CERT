@@ -5,13 +5,13 @@ Provides instrumentation for AutoGen agents, group chats, and multi-agent
 conversations with automatic CERT metrics tracking.
 """
 
-from typing import Any, Dict, List, Optional, Callable
 import time
+from typing import Any, Callable, Dict, List, Optional
 
-from cert.integrations.base import CERTIntegration, PipelineMetrics
-from cert.providers.base import ProviderInterface
-from cert.models import ModelBaseline
 from cert.analysis.quality import QualityScorer
+from cert.integrations.base import CERTIntegration
+from cert.models import ModelBaseline
+from cert.providers.base import ProviderInterface
 
 
 class CERTAutoGen(CERTIntegration):
@@ -186,12 +186,14 @@ class CERTAutoGen(CERTIntegration):
                     print(f"[CERT] Quality score: {quality:.3f}")
 
             # Store in conversation history
-            self._conversation_history.append({
-                "agent": agent_name,
-                "input": input_text,
-                "output": output_text,
-                "timestamp": time.time(),
-            })
+            self._conversation_history.append(
+                {
+                    "agent": agent_name,
+                    "input": input_text,
+                    "output": output_text,
+                    "timestamp": time.time(),
+                }
+            )
 
             return reply
 
@@ -201,10 +203,7 @@ class CERTAutoGen(CERTIntegration):
         return agent
 
     def create_instrumented_groupchat(
-        self,
-        agents: List[Any],
-        max_round: int = 10,
-        **groupchat_kwargs
+        self, agents: List[Any], max_round: int = 10, **groupchat_kwargs
     ) -> Any:
         """
         Create an AutoGen GroupChat with automatic CERT instrumentation.
@@ -231,9 +230,7 @@ class CERTAutoGen(CERTIntegration):
         try:
             import autogen
         except ImportError:
-            raise ImportError(
-                "AutoGen is not installed. Install it with: pip install pyautogen"
-            )
+            raise ImportError("AutoGen is not installed. Install it with: pip install pyautogen")
 
         # Reset metrics for new conversation
         self.reset_metrics()
@@ -246,19 +243,16 @@ class CERTAutoGen(CERTIntegration):
 
         # Create group chat
         groupchat = autogen.GroupChat(
-            agents=wrapped_agents,
-            messages=[],
-            max_round=max_round,
-            **groupchat_kwargs
+            agents=wrapped_agents, messages=[], max_round=max_round, **groupchat_kwargs
         )
 
         if self.verbose:
-            print(f"\n{'='*70}")
-            print(f"CERT: AutoGen GroupChat Created")
-            print(f"{'='*70}")
+            print(f"\n{'=' * 70}")
+            print("CERT: AutoGen GroupChat Created")
+            print(f"{'=' * 70}")
             print(f"Agents: {[a.name for a in wrapped_agents]}")
             print(f"Max rounds: {max_round}")
-            print(f"{'='*70}")
+            print(f"{'=' * 70}")
 
         return groupchat
 
@@ -297,9 +291,9 @@ class CERTAutoGen(CERTIntegration):
             self.reset_metrics()
 
             if self.verbose:
-                print(f"\n{'='*70}")
-                print(f"CERT: Starting AutoGen Conversation")
-                print(f"{'='*70}")
+                print(f"\n{'=' * 70}")
+                print("CERT: Starting AutoGen Conversation")
+                print(f"{'=' * 70}")
                 print(f"Initiator: {wrapped_initiator.name}")
                 print(f"Recipient: {wrapped_recipient.name}")
 
@@ -314,9 +308,9 @@ class CERTAutoGen(CERTIntegration):
             duration_ms = (time.time() - start_time) * 1000
 
             if self.verbose:
-                print(f"\n{'='*70}")
+                print(f"\n{'=' * 70}")
                 print(f"CERT: Conversation Complete ({duration_ms:.0f}ms)")
-                print(f"{'='*70}")
+                print(f"{'=' * 70}")
 
             # Calculate coordination effect
             if len(self.metrics.intermediate_qualities) >= 2:
@@ -390,8 +384,7 @@ class CERTAutoGen(CERTIntegration):
 
         # Calculate average quality per agent
         agent_avg_quality = {
-            agent: sum(qualities) / len(qualities)
-            for agent, qualities in agent_qualities.items()
+            agent: sum(qualities) / len(qualities) for agent, qualities in agent_qualities.items()
         }
 
         return {

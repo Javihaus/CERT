@@ -5,17 +5,20 @@ Implements the ProviderInterface for OpenAI's GPT models with validated
 baselines from the paper.
 """
 
-from typing import List, Optional, Any
 import asyncio
-from openai import AsyncOpenAI, OpenAIError, RateLimitError as OpenAIRateLimitError
+from typing import Any, List, Optional
+
+from openai import AsyncOpenAI, OpenAIError
+from openai import RateLimitError as OpenAIRateLimitError
+
+from cert.models import ModelRegistry
 from cert.providers.base import (
-    ProviderInterface,
-    ProviderConfig,
-    ProviderBaseline,
     APIError,
+    ProviderBaseline,
+    ProviderConfig,
+    ProviderInterface,
     RateLimitError,
 )
-from cert.models import ModelRegistry
 
 
 class OpenAIProvider(ProviderInterface):
@@ -61,6 +64,7 @@ class OpenAIProvider(ProviderInterface):
         if not self._is_openai_model(config.model_name):
             # Warning instead of error - let OpenAI API validate
             import warnings
+
             warnings.warn(
                 f"Model '{config.model_name}' not in known OpenAI models list. "
                 f"Will attempt to use it anyway. If it fails, check available models "
@@ -291,5 +295,5 @@ class OpenAIProvider(ProviderInterface):
     def __repr__(self) -> str:
         """String representation."""
         baseline = self.get_baseline()
-        baseline_str = f", validated" if baseline else ", not validated"
+        baseline_str = ", validated" if baseline else ", not validated"
         return f"OpenAIProvider(model={self.config.model_name}{baseline_str})"

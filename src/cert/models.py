@@ -16,8 +16,7 @@ Users can:
 """
 
 from dataclasses import dataclass
-from typing import Dict, Optional, List
-from enum import Enum
+from typing import Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -378,12 +377,8 @@ class ModelRegistry:
             f"Total: {len(cls._VALIDATED_MODELS)} validated models "
             f"across {len(by_provider)} providers"
         )
-        lines.append(
-            "\nNote: These baselines are measured from the CERT paper validation."
-        )
-        lines.append(
-            "For unlisted models, use ModelRegistry.register_custom_baseline() or"
-        )
+        lines.append("\nNote: These baselines are measured from the CERT paper validation.")
+        lines.append("For unlisted models, use ModelRegistry.register_custom_baseline() or")
         lines.append("measure your own baselines with the SDK measurement tools.")
 
         return "\n".join(lines)

@@ -5,17 +5,19 @@ Implements the ProviderInterface for Google's Gemini models with validated
 baselines from the paper.
 """
 
-from typing import List, Optional, Any
 import asyncio
+from typing import Any, List, Optional
+
 import google.generativeai as genai
+
+from cert.models import ModelRegistry
 from cert.providers.base import (
-    ProviderInterface,
-    ProviderConfig,
-    ProviderBaseline,
     APIError,
+    ProviderBaseline,
+    ProviderConfig,
+    ProviderInterface,
     RateLimitError,
 )
-from cert.models import ModelRegistry
 
 
 class GoogleProvider(ProviderInterface):
@@ -140,8 +142,7 @@ class GoogleProvider(ProviderInterface):
         except Exception as e:
             if "quota" in str(e).lower() or "rate" in str(e).lower():
                 raise RateLimitError(f"Google rate limit exceeded: {e}")
-            else:
-                raise APIError(f"Google API error: {e}")
+            raise APIError(f"Google API error: {e}")
 
     async def _generate_single(
         self,
@@ -265,8 +266,7 @@ class GoogleProvider(ProviderInterface):
         except Exception as e:
             if "quota" in str(e).lower() or "rate" in str(e).lower():
                 raise RateLimitError(f"Google rate limit exceeded: {e}")
-            else:
-                raise APIError(f"Google API error: {e}")
+            raise APIError(f"Google API error: {e}")
 
     async def _get_embedding_internal(self, text: str) -> List[float]:
         """Internal method to get embedding."""
@@ -284,5 +284,5 @@ class GoogleProvider(ProviderInterface):
     def __repr__(self) -> str:
         """String representation."""
         baseline = self.get_baseline()
-        baseline_str = f", validated" if baseline else ", not validated"
+        baseline_str = ", validated" if baseline else ", not validated"
         return f"GoogleProvider(model={self.config.model_name}{baseline_str})"

@@ -11,19 +11,23 @@ For basic usage with validated models, see basic_usage.py
 """
 
 import asyncio
-from cert.models import ModelRegistry, ModelBaseline
-from cert.providers import OpenAIProvider, GoogleProvider
-from cert.providers.base import ProviderConfig
-from cert.analysis.semantic import SemanticAnalyzer
+
+import numpy as np
+
 from cert.analysis.quality import QualityScorer
+from cert.analysis.semantic import SemanticAnalyzer
 from cert.core.metrics import (
     behavioral_consistency,
     empirical_performance_distribution,
 )
-import numpy as np
+from cert.models import ModelRegistry
+from cert.providers import OpenAIProvider
+from cert.providers.base import ProviderConfig
 
 
-async def measure_custom_baseline_full(provider, prompts, n_consistency_trials=20, domain_keywords=None):
+async def measure_custom_baseline_full(
+    provider, prompts, n_consistency_trials=20, domain_keywords=None
+):
     """
     Measure complete custom baseline for any model.
 
@@ -41,9 +45,9 @@ async def measure_custom_baseline_full(provider, prompts, n_consistency_trials=2
     Returns:
         Tuple of (consistency, mean_performance, std_performance)
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Custom Baseline Measurement")
-    print("="*70)
+    print("=" * 70)
     print(f"\nModel: {provider.config.model_name}")
     print(f"Consistency trials: {n_consistency_trials}")
     print(f"Performance prompts: {len(prompts)}")
@@ -62,7 +66,7 @@ async def measure_custom_baseline_full(provider, prompts, n_consistency_trials=2
         )
         responses.append(response)
         if (i + 1) % 5 == 0:
-            print(f"    Progress: {i+1}/{n_consistency_trials}")
+            print(f"    Progress: {i + 1}/{n_consistency_trials}")
 
     # Calculate consistency
     analyzer = SemanticAnalyzer()
@@ -81,7 +85,7 @@ async def measure_custom_baseline_full(provider, prompts, n_consistency_trials=2
         print(f"  Using {len(domain_keywords)} domain-specific keywords")
     else:
         scorer = QualityScorer()
-        print(f"  Using default analytical keywords")
+        print("  Using default analytical keywords")
 
     quality_scores = []
     for i, prompt in enumerate(prompts):
@@ -93,7 +97,7 @@ async def measure_custom_baseline_full(provider, prompts, n_consistency_trials=2
         components = scorer.score(prompt, response)
         quality_scores.append(components.composite_score)
 
-        print(f"    Prompt {i+1}/{len(prompts)}: Q = {components.composite_score:.3f}")
+        print(f"    Prompt {i + 1}/{len(prompts)}: Q = {components.composite_score:.3f}")
 
     # Calculate distribution
     mu, sigma = empirical_performance_distribution(np.array(quality_scores))
@@ -101,13 +105,13 @@ async def measure_custom_baseline_full(provider, prompts, n_consistency_trials=2
     print(f"  ✓ Performance: μ = {mu:.3f}, σ = {sigma:.3f}")
 
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Custom Baseline Results")
-    print("="*70)
+    print("=" * 70)
     print(f"Consistency:   C = {consistency:.3f}")
     print(f"Mean:          μ = {mu:.3f}")
     print(f"Std Dev:       σ = {sigma:.3f}")
-    print("="*70)
+    print("=" * 70)
 
     return consistency, mu, sigma
 
@@ -121,9 +125,9 @@ async def example_healthcare_baseline():
     - Domain-specific prompts (medical/healthcare)
     - Custom quality keywords for healthcare domain
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example: Healthcare Domain Custom Baseline")
-    print("="*70)
+    print("=" * 70)
 
     # Step 1: Check if model is in registry
     model_id = "gpt-4-turbo"
@@ -152,29 +156,67 @@ async def example_healthcare_baseline():
     # Step 3: Define healthcare-specific keywords for quality scoring
     healthcare_keywords = {
         # Clinical terms
-        "patient", "clinical", "diagnosis", "treatment", "care",
-        "medical", "physician", "nurse", "provider", "practitioner",
+        "patient",
+        "clinical",
+        "diagnosis",
+        "treatment",
+        "care",
+        "medical",
+        "physician",
+        "nurse",
+        "provider",
+        "practitioner",
         # Healthcare operations
-        "hospital", "clinic", "facility", "healthcare", "health",
-        "quality", "safety", "protocol", "procedure", "guideline",
+        "hospital",
+        "clinic",
+        "facility",
+        "healthcare",
+        "health",
+        "quality",
+        "safety",
+        "protocol",
+        "procedure",
+        "guideline",
         # Technology
-        "ehr", "emr", "telemedicine", "telehealth", "digital",
-        "system", "technology", "data", "record", "information",
+        "ehr",
+        "emr",
+        "telemedicine",
+        "telehealth",
+        "digital",
+        "system",
+        "technology",
+        "data",
+        "record",
+        "information",
         # Management
-        "workflow", "process", "management", "coordination", "efficiency",
-        "resource", "allocation", "optimization", "improvement",
+        "workflow",
+        "process",
+        "management",
+        "coordination",
+        "efficiency",
+        "resource",
+        "allocation",
+        "optimization",
+        "improvement",
         # Compliance
-        "hipaa", "compliance", "privacy", "security", "regulation",
-        "policy", "standard", "certification", "accreditation",
+        "hipaa",
+        "compliance",
+        "privacy",
+        "security",
+        "regulation",
+        "policy",
+        "standard",
+        "certification",
+        "accreditation",
     }
 
-    print(f"\nHealthcare Domain Configuration:")
+    print("\nHealthcare Domain Configuration:")
     print(f"  - {len(healthcare_prompts)} domain-specific prompts")
     print(f"  - {len(healthcare_keywords)} healthcare keywords for quality scoring")
     print(f"  - Model: {model_id}")
 
     # Step 4: Get API key and initialize provider
-    print(f"\nEnter your OpenAI API key:")
+    print("\nEnter your OpenAI API key:")
     api_key = input("> ").strip()
 
     config = ProviderConfig(
@@ -200,9 +242,9 @@ async def example_healthcare_baseline():
     )
 
     # Step 6: Register custom baseline
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Registering Custom Baseline")
-    print("="*70)
+    print("=" * 70)
 
     custom_baseline = ModelRegistry.register_custom_baseline(
         model_id=model_id,
@@ -214,29 +256,29 @@ async def example_healthcare_baseline():
     )
 
     print(f"\n✓ Registered: {custom_baseline}")
-    print(f"\nThis baseline is now available for use:")
+    print("\nThis baseline is now available for use:")
     print(f"  ModelRegistry.get_model('{model_id}')")
 
     # Step 7: Compare to paper baselines (if similar model available)
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Comparison to Paper Baselines")
-    print("="*70)
+    print("=" * 70)
 
     gpt4o_baseline = ModelRegistry.get_model("gpt-4o")
     if gpt4o_baseline:
-        print(f"\nGPT-4o (from paper):")
+        print("\nGPT-4o (from paper):")
         print(f"  C = {gpt4o_baseline.consistency:.3f}")
         print(f"  μ = {gpt4o_baseline.mean_performance:.3f}")
         print(f"  σ = {gpt4o_baseline.std_performance:.3f}")
 
-        print(f"\nGPT-4 Turbo (Healthcare custom):")
+        print("\nGPT-4 Turbo (Healthcare custom):")
         print(f"  C = {consistency:.3f} ({consistency - gpt4o_baseline.consistency:+.3f})")
         print(f"  μ = {mu:.3f} ({mu - gpt4o_baseline.mean_performance:+.3f})")
         print(f"  σ = {sigma:.3f} ({sigma - gpt4o_baseline.std_performance:+.3f})")
 
-        print(f"\nNote: Differences expected due to:")
-        print(f"  - Different model (Turbo vs 4o)")
-        print(f"  - Different domain (Healthcare vs General Analytical)")
+        print("\nNote: Differences expected due to:")
+        print("  - Different model (Turbo vs 4o)")
+        print("  - Different domain (Healthcare vs General Analytical)")
 
     return custom_baseline
 
@@ -247,9 +289,9 @@ async def example_legal_baseline():
 
     Quick demonstration of domain-specific customization.
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example: Legal Domain Custom Baseline")
-    print("="*70)
+    print("=" * 70)
 
     # Legal-specific prompts
     legal_prompts = [
@@ -262,33 +304,56 @@ async def example_legal_baseline():
 
     # Legal-specific keywords
     legal_keywords = {
-        "legal", "law", "regulation", "compliance", "contract",
-        "agreement", "litigation", "court", "judge", "attorney",
-        "liability", "obligation", "rights", "statute", "jurisdiction",
-        "evidence", "precedent", "case", "ruling", "counsel",
-        "due diligence", "intellectual property", "patent", "copyright",
-        "governance", "regulatory", "policy", "framework", "standard",
+        "legal",
+        "law",
+        "regulation",
+        "compliance",
+        "contract",
+        "agreement",
+        "litigation",
+        "court",
+        "judge",
+        "attorney",
+        "liability",
+        "obligation",
+        "rights",
+        "statute",
+        "jurisdiction",
+        "evidence",
+        "precedent",
+        "case",
+        "ruling",
+        "counsel",
+        "due diligence",
+        "intellectual property",
+        "patent",
+        "copyright",
+        "governance",
+        "regulatory",
+        "policy",
+        "framework",
+        "standard",
     }
 
-    print(f"\nLegal Domain Configuration:")
+    print("\nLegal Domain Configuration:")
     print(f"  - {len(legal_prompts)} legal-specific prompts")
     print(f"  - {len(legal_keywords)} legal keywords")
-    print(f"\nTo measure full baseline:")
-    print(f"  consistency, mu, sigma = await measure_custom_baseline_full(")
-    print(f"      provider=your_provider,")
-    print(f"      prompts=legal_prompts,")
-    print(f"      n_consistency_trials=20,")
-    print(f"      domain_keywords=legal_keywords,")
-    print(f"  )")
+    print("\nTo measure full baseline:")
+    print("  consistency, mu, sigma = await measure_custom_baseline_full(")
+    print("      provider=your_provider,")
+    print("      prompts=legal_prompts,")
+    print("      n_consistency_trials=20,")
+    print("      domain_keywords=legal_keywords,")
+    print("  )")
 
 
 def show_custom_quality_scoring():
     """
     Demonstrate custom quality scoring weights for specific domains.
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Custom Quality Scoring Configuration")
-    print("="*70)
+    print("=" * 70)
 
     print("\nDefault scoring (from paper - analytical tasks):")
     print("  Semantic Relevance:    30%")
@@ -314,9 +379,9 @@ async def main():
     """
     Advanced usage demonstration menu.
     """
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CERT SDK - Advanced Usage Examples")
-    print("="*70)
+    print("=" * 70)
 
     print("\nThis demonstrates:")
     print("  1. Using custom models (not in validated registry)")
@@ -342,9 +407,9 @@ async def main():
     else:
         print("\nInvalid choice. Please run again.")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Advanced Features Summary")
-    print("="*70)
+    print("=" * 70)
     print("\n✓ Custom baselines for any model")
     print("✓ Domain-specific prompts and keywords")
     print("✓ Configurable quality scoring weights")

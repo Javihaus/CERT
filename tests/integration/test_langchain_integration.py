@@ -9,10 +9,10 @@ Tests cover:
 - Token limit handling
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
 from typing import Any, Dict, List
+
+import pytest
 
 # These tests require langchain to be installed
 pytest.importorskip("langchain")
@@ -65,6 +65,7 @@ class MockLangChainAgent:
 
         if self.response_delay > 0:
             import time
+
             time.sleep(self.response_delay)
 
         # Extract input message
@@ -75,7 +76,7 @@ class MockLangChainAgent:
         response = {
             "messages": [
                 *messages,
-                {"role": "assistant", "content": f"{self.name} processed: {input_text}"}
+                {"role": "assistant", "content": f"{self.name} processed: {input_text}"},
             ]
         }
 
@@ -99,13 +100,10 @@ class MockLangChainAgent:
         for word in words:
             if self.response_delay > 0:
                 import time
+
                 time.sleep(self.response_delay / len(words))
 
-            yield {
-                "messages": [
-                    {"role": "assistant", "content": word + " "}
-                ]
-            }
+            yield {"messages": [{"role": "assistant", "content": word + " "}]}
 
 
 @pytest.fixture
@@ -122,28 +120,20 @@ class TestLangChainBasicIntegration:
         """Test wrapping a single agent."""
         agent = MockLangChainAgent("TestAgent")
         wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="test_agent",
-            agent_name="Test Agent"
+            agent=agent, agent_id="test_agent", agent_name="Test Agent"
         )
 
         # Verify wrapped agent has same interface
-        assert hasattr(wrapped, 'invoke')
-        assert hasattr(wrapped, 'stream')
+        assert hasattr(wrapped, "invoke")
+        assert hasattr(wrapped, "stream")
 
     def test_agent_invoke_execution(self, cert_integration):
         """Test agent invoke execution with tracking."""
         agent = MockLangChainAgent("Agent1")
-        wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="agent1",
-            agent_name="Agent 1"
-        )
+        wrapped = cert_integration.wrap_agent(agent=agent, agent_id="agent1", agent_name="Agent 1")
 
         # Execute
-        result = wrapped.invoke({
-            "messages": [{"role": "user", "content": "Test input"}]
-        })
+        result = wrapped.invoke({"messages": [{"role": "user", "content": "Test input"}]})
 
         # Verify execution was tracked
         assert len(cert_integration.metrics.executions) == 1
@@ -158,15 +148,15 @@ class TestLangChainBasicIntegration:
         agent1 = MockLangChainAgent("Researcher")
         agent2 = MockLangChainAgent("Writer")
 
-        pipeline = cert_integration.create_multi_agent_pipeline([
-            {"agent": agent1, "agent_id": "researcher", "agent_name": "Researcher"},
-            {"agent": agent2, "agent_id": "writer", "agent_name": "Writer"},
-        ])
+        pipeline = cert_integration.create_multi_agent_pipeline(
+            [
+                {"agent": agent1, "agent_id": "researcher", "agent_name": "Researcher"},
+                {"agent": agent2, "agent_id": "writer", "agent_name": "Writer"},
+            ]
+        )
 
         # Execute pipeline
-        result = pipeline({
-            "messages": [{"role": "user", "content": "Research AI"}]
-        })
+        result = pipeline({"messages": [{"role": "user", "content": "Research AI"}]})
 
         # Verify both agents executed
         assert agent1.call_count == 1
@@ -185,15 +175,11 @@ class TestLangChainStreaming:
         """Test agent streaming with proper chunk collection."""
         agent = MockLangChainAgent("StreamAgent")
         wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="stream_agent",
-            agent_name="Stream Agent"
+            agent=agent, agent_id="stream_agent", agent_name="Stream Agent"
         )
 
         # Stream execution
-        chunks = list(wrapped.stream({
-            "messages": [{"role": "user", "content": "Test streaming"}]
-        }))
+        chunks = list(wrapped.stream({"messages": [{"role": "user", "content": "Test streaming"}]}))
 
         # Verify chunks were yielded
         assert len(chunks) > 0
@@ -207,16 +193,12 @@ class TestLangChainStreaming:
         """Test error handling during streaming."""
         agent = MockLangChainAgent("FailAgent", should_fail=True)
         wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="fail_agent",
-            agent_name="Fail Agent"
+            agent=agent, agent_id="fail_agent", agent_name="Fail Agent"
         )
 
         # Stream should propagate errors
         with pytest.raises(RuntimeError, match="streaming failed"):
-            list(wrapped.stream({
-                "messages": [{"role": "user", "content": "Test"}]
-            }))
+            list(wrapped.stream({"messages": [{"role": "user", "content": "Test"}]}))
 
 
 class TestLangChainErrorHandling:
@@ -226,16 +208,12 @@ class TestLangChainErrorHandling:
         """Test that agent failures propagate correctly."""
         agent = MockLangChainAgent("FailAgent", should_fail=True)
         wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="fail_agent",
-            agent_name="Fail Agent"
+            agent=agent, agent_id="fail_agent", agent_name="Fail Agent"
         )
 
         # Error should propagate
         with pytest.raises(RuntimeError, match="Agent FailAgent failed"):
-            wrapped.invoke({
-                "messages": [{"role": "user", "content": "Test"}]
-            })
+            wrapped.invoke({"messages": [{"role": "user", "content": "Test"}]})
 
     def test_pipeline_partial_failure(self, cert_integration):
         """Test pipeline behavior when one agent fails."""
@@ -243,11 +221,13 @@ class TestLangChainErrorHandling:
         agent2 = MockLangChainAgent("Agent2", should_fail=True)
         agent3 = MockLangChainAgent("Agent3")
 
-        pipeline = cert_integration.create_multi_agent_pipeline([
-            {"agent": agent1, "agent_id": "agent1", "agent_name": "Agent 1"},
-            {"agent": agent2, "agent_id": "agent2", "agent_name": "Agent 2"},
-            {"agent": agent3, "agent_id": "agent3", "agent_name": "Agent 3"},
-        ])
+        pipeline = cert_integration.create_multi_agent_pipeline(
+            [
+                {"agent": agent1, "agent_id": "agent1", "agent_name": "Agent 1"},
+                {"agent": agent2, "agent_id": "agent2", "agent_name": "Agent 2"},
+                {"agent": agent3, "agent_id": "agent3", "agent_name": "Agent 3"},
+            ]
+        )
 
         # Pipeline should fail at agent2
         with pytest.raises(RuntimeError, match="Agent Agent2 failed"):
@@ -264,11 +244,7 @@ class TestLangChainErrorHandling:
     def test_empty_input_handling(self, cert_integration):
         """Test handling of empty or malformed inputs."""
         agent = MockLangChainAgent("Agent")
-        wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="agent",
-            agent_name="Agent"
-        )
+        wrapped = cert_integration.wrap_agent(agent=agent, agent_id="agent", agent_name="Agent")
 
         # Empty messages
         result = wrapped.invoke({"messages": []})
@@ -286,15 +262,11 @@ class TestLangChainPerformance:
         """Test that execution timing is properly tracked."""
         agent = MockLangChainAgent("SlowAgent", response_delay=0.1)
         wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="slow_agent",
-            agent_name="Slow Agent"
+            agent=agent, agent_id="slow_agent", agent_name="Slow Agent"
         )
 
         # Execute
-        wrapped.invoke({
-            "messages": [{"role": "user", "content": "Test"}]
-        })
+        wrapped.invoke({"messages": [{"role": "user", "content": "Test"}]})
 
         # Verify timing was tracked
         execution = cert_integration.metrics.executions[0]
@@ -307,26 +279,21 @@ class TestLangChainPerformance:
         agent2 = MockLangChainAgent("Agent2", response_delay=0.05)
 
         wrapped1 = cert_integration.wrap_agent(
-            agent=agent1,
-            agent_id="agent1",
-            agent_name="Agent 1"
+            agent=agent1, agent_id="agent1", agent_name="Agent 1"
         )
         wrapped2 = cert_integration.wrap_agent(
-            agent=agent2,
-            agent_id="agent2",
-            agent_name="Agent 2"
+            agent=agent2, agent_id="agent2", agent_name="Agent 2"
         )
 
         # Execute both
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             future1 = executor.submit(
-                wrapped1.invoke,
-                {"messages": [{"role": "user", "content": "Test 1"}]}
+                wrapped1.invoke, {"messages": [{"role": "user", "content": "Test 1"}]}
             )
             future2 = executor.submit(
-                wrapped2.invoke,
-                {"messages": [{"role": "user", "content": "Test 2"}]}
+                wrapped2.invoke, {"messages": [{"role": "user", "content": "Test 2"}]}
             )
 
             result1 = future1.result()
@@ -347,16 +314,11 @@ class TestLangChainMetrics:
         """Test that quality scores are calculated."""
         agent = MockLangChainAgent("Agent")
         wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="agent",
-            agent_name="Agent",
-            calculate_quality=True
+            agent=agent, agent_id="agent", agent_name="Agent", calculate_quality=True
         )
 
         # Execute
-        wrapped.invoke({
-            "messages": [{"role": "user", "content": "Test input with quality"}]
-        })
+        wrapped.invoke({"messages": [{"role": "user", "content": "Test input with quality"}]})
 
         # Verify quality was calculated
         assert len(cert_integration.metrics.intermediate_qualities) > 0
@@ -367,10 +329,12 @@ class TestLangChainMetrics:
         agent1 = MockLangChainAgent("Agent1")
         agent2 = MockLangChainAgent("Agent2")
 
-        pipeline = cert_integration.create_multi_agent_pipeline([
-            {"agent": agent1, "agent_id": "agent1", "agent_name": "Agent 1"},
-            {"agent": agent2, "agent_id": "agent2", "agent_name": "Agent 2"},
-        ])
+        pipeline = cert_integration.create_multi_agent_pipeline(
+            [
+                {"agent": agent1, "agent_id": "agent1", "agent_name": "Agent 1"},
+                {"agent": agent2, "agent_id": "agent2", "agent_name": "Agent 2"},
+            ]
+        )
 
         # Execute
         pipeline({"messages": [{"role": "user", "content": "Test"}]})
@@ -386,18 +350,12 @@ class TestLangChainEdgeCases:
     def test_very_long_input(self, cert_integration):
         """Test handling of very long inputs (token limit scenarios)."""
         agent = MockLangChainAgent("Agent")
-        wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="agent",
-            agent_name="Agent"
-        )
+        wrapped = cert_integration.wrap_agent(agent=agent, agent_id="agent", agent_name="Agent")
 
         # Create a very long input (simulating token limit issues)
         long_text = "word " * 10000  # ~10k words
 
-        result = wrapped.invoke({
-            "messages": [{"role": "user", "content": long_text}]
-        })
+        result = wrapped.invoke({"messages": [{"role": "user", "content": long_text}]})
 
         # Should handle without crashing
         assert result is not None
@@ -406,11 +364,7 @@ class TestLangChainEdgeCases:
     def test_special_characters_in_content(self, cert_integration):
         """Test handling of special characters and encoding."""
         agent = MockLangChainAgent("Agent")
-        wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="agent",
-            agent_name="Agent"
-        )
+        wrapped = cert_integration.wrap_agent(agent=agent, agent_id="agent", agent_name="Agent")
 
         # Test with various special characters
         special_inputs = [
@@ -421,25 +375,17 @@ class TestLangChainEdgeCases:
         ]
 
         for test_input in special_inputs:
-            result = wrapped.invoke({
-                "messages": [{"role": "user", "content": test_input}]
-            })
+            result = wrapped.invoke({"messages": [{"role": "user", "content": test_input}]})
             assert result is not None
 
     def test_rapid_sequential_calls(self, cert_integration):
         """Test handling of rapid sequential calls."""
         agent = MockLangChainAgent("Agent")
-        wrapped = cert_integration.wrap_agent(
-            agent=agent,
-            agent_id="agent",
-            agent_name="Agent"
-        )
+        wrapped = cert_integration.wrap_agent(agent=agent, agent_id="agent", agent_name="Agent")
 
         # Make many rapid calls
         for i in range(50):
-            wrapped.invoke({
-                "messages": [{"role": "user", "content": f"Call {i}"}]
-            })
+            wrapped.invoke({"messages": [{"role": "user", "content": f"Call {i}"}]})
 
         # All should be tracked
         assert len(cert_integration.metrics.executions) == 50

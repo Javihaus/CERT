@@ -7,14 +7,13 @@ into existing multi-agent frameworks like LangChain, CrewAI, and Microsoft Agent
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Callable
 from datetime import datetime
-import numpy as np
+from typing import Any, Dict, List, Optional
 
-from cert.providers.base import ProviderInterface
-from cert.models import ModelBaseline
 from cert.analysis.quality import QualityScorer
 from cert.core.metrics import coordination_effect, pipeline_health_score
+from cert.models import ModelBaseline
+from cert.providers.base import ProviderInterface
 
 
 @dataclass
@@ -282,32 +281,32 @@ class CERTIntegration(ABC):
 
     def print_metrics(self) -> None:
         """Print formatted metrics summary."""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("CERT Pipeline Metrics")
-        print("="*70)
+        print("=" * 70)
 
-        print(f"\nExecution Summary:")
+        print("\nExecution Summary:")
         print(f"  Total agents:     {len(self.metrics.executions)}")
         print(f"  Total duration:   {self.metrics.total_duration_ms:.0f}ms")
 
         if self.metrics.executions:
-            print(f"\n  Agent Executions:")
+            print("\n  Agent Executions:")
             for i, ex in enumerate(self.metrics.executions, 1):
                 print(f"    {i}. {ex.agent_name}: {ex.duration_ms:.0f}ms")
 
         if self.metrics.output_quality is not None:
-            print(f"\nQuality Metrics:")
+            print("\nQuality Metrics:")
             print(f"  Output quality:   {self.metrics.output_quality:.3f}")
 
         if self.metrics.coordination_effect is not None:
-            print(f"\nCoordination Metrics:")
+            print("\nCoordination Metrics:")
             print(f"  γ (coordination): {self.metrics.coordination_effect:.3f}")
             if self.metrics.coordination_effect > 1.0:
                 improvement = (self.metrics.coordination_effect - 1.0) * 100
                 print(f"  Improvement:      +{improvement:.1f}%")
 
         if self.metrics.health_score is not None:
-            print(f"\nPipeline Health:")
+            print("\nPipeline Health:")
             print(f"  Health score:     {self.metrics.health_score:.3f}")
             if self.metrics.health_score > 0.8:
                 status = "✓ PRODUCTION READY"
@@ -318,9 +317,9 @@ class CERTIntegration(ABC):
             print(f"  Status:           {status}")
 
         if self.baseline:
-            print(f"\nBaseline Comparison:")
+            print("\nBaseline Comparison:")
             print(f"  Model:            {self.baseline.model_id}")
             print(f"  Baseline C:       {self.baseline.consistency:.3f}")
             print(f"  Baseline μ:       {self.baseline.mean_performance:.3f}")
 
-        print("="*70 + "\n")
+        print("=" * 70 + "\n")

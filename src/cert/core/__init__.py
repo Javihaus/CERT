@@ -5,9 +5,9 @@ from cert.core.metrics import (
     coordination_effect,
     empirical_performance_distribution,
     performance_baseline,
-    prediction_error,
-    pipeline_health_score,
     performance_variability,
+    pipeline_health_score,
+    prediction_error,
 )
 
 # Note: ObservabilityTracker and Pipeline modules not yet implemented
@@ -20,9 +20,9 @@ __all__ = [
     "coordination_effect",
     "empirical_performance_distribution",
     "performance_baseline",
-    "prediction_error",
-    "pipeline_health_score",
     "performance_variability",
+    "pipeline_health_score",
+    "prediction_error",
     # "ObservabilityTracker",
     # "observability_coverage",
     # "Pipeline",

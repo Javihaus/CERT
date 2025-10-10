@@ -5,16 +5,17 @@ These tests verify that the implementation exactly matches the mathematical
 definitions from the paper using known test cases.
 """
 
-import pytest
 import numpy as np
+import pytest
+
 from cert.core.metrics import (
     behavioral_consistency,
-    empirical_performance_distribution,
     coordination_effect,
+    empirical_performance_distribution,
     performance_baseline,
-    prediction_error,
-    pipeline_health_score,
     performance_variability,
+    pipeline_health_score,
+    prediction_error,
 )
 
 
@@ -376,7 +377,7 @@ class TestPerformanceVariabilityValidation:
         assert abs(omega - 2.852) < 0.01
 
 
-class TestFormulaCross Validation:
+class TestFormulaCrossValidation:
     """Cross-validate formulas against each other."""
 
     def test_baseline_and_error_consistency(self):

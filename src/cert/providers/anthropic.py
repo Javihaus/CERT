@@ -5,17 +5,27 @@ Implements the ProviderInterface for Anthropic's Claude models with validated
 baselines from the paper.
 """
 
-from typing import List, Optional, Any
 import asyncio
-from anthropic import AsyncAnthropic, APIError as AnthropicAPIError, RateLimitError as AnthropicRateLimitError
+from typing import Any, List, Optional
+
+from anthropic import (
+    APIError as AnthropicAPIError,
+)
+from anthropic import (
+    AsyncAnthropic,
+)
+from anthropic import (
+    RateLimitError as AnthropicRateLimitError,
+)
+
+from cert.models import ModelRegistry
 from cert.providers.base import (
-    ProviderInterface,
-    ProviderConfig,
-    ProviderBaseline,
     APIError,
+    ProviderBaseline,
+    ProviderConfig,
+    ProviderInterface,
     RateLimitError,
 )
-from cert.models import ModelRegistry
 
 
 class AnthropicProvider(ProviderInterface):
@@ -267,5 +277,5 @@ class AnthropicProvider(ProviderInterface):
     def __repr__(self) -> str:
         """String representation."""
         baseline = self.get_baseline()
-        baseline_str = f", validated" if baseline else ", not validated"
+        baseline_str = ", validated" if baseline else ", not validated"
         return f"AnthropicProvider(model={self.config.model_name}{baseline_str})"

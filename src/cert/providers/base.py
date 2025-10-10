@@ -5,18 +5,19 @@ Defines the standard interface that all provider implementations must follow,
 including retry logic, rate limiting, and error handling.
 """
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
 import asyncio
 import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, List, Optional
+
+import aiohttp
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
-import aiohttp
 
 
 @dataclass
@@ -52,6 +53,7 @@ except ImportError:
     @dataclass
     class ProviderBaseline:
         """Baseline metrics (deprecated - use cert.models.ModelBaseline)."""
+
         consistency: float
         mean_performance: float
         std_performance: float

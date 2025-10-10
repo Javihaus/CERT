@@ -10,7 +10,8 @@ This module implements the five core CERT metrics with exact formulas from the p
 5. Pipeline Health Score Hpipe - Equation 7
 """
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple
+
 import numpy as np
 from numpy.typing import NDArray
 

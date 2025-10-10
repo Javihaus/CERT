@@ -5,9 +5,11 @@ Implements Equation 8: Q(p,r) composite quality score used for baseline
 and coordination evaluation.
 """
 
-from typing import List, Set, NamedTuple, Optional
 import re
+from typing import List, NamedTuple, Optional, Set
+
 import numpy as np
+
 from cert.analysis.semantic import SemanticAnalyzer
 
 

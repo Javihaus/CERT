@@ -1,17 +1,18 @@
 """Provider integrations for LLM APIs."""
 
 from typing import Optional
+
+from cert.providers.anthropic import AnthropicProvider
 from cert.providers.base import (
-    ProviderInterface,
-    ProviderConfig,
-    ProviderBaseline,
-    ProviderError,
     APIError,
+    ProviderBaseline,
+    ProviderConfig,
+    ProviderError,
+    ProviderInterface,
     RateLimitError,
 )
-from cert.providers.anthropic import AnthropicProvider
-from cert.providers.openai import OpenAIProvider
 from cert.providers.google import GoogleProvider
+from cert.providers.openai import OpenAIProvider
 from cert.providers.xai import XAIProvider
 
 
@@ -21,7 +22,7 @@ def create_provider(
     provider: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 1024,
-    **kwargs
+    **kwargs,
 ) -> ProviderInterface:
     """
     Create a provider instance with simplified initialization.
@@ -62,24 +63,24 @@ def create_provider(
     # Auto-detect provider from model name if not specified
     if provider is None:
         from cert.models import ModelRegistry
+
         baseline = ModelRegistry.get_model(model_name)
         if baseline:
             provider = baseline.provider
+        # Fallback: try to infer from model name patterns
+        elif model_name.startswith(("gpt-", "gpt")):
+            provider = "openai"
+        elif model_name.startswith(("grok", "grok-")):
+            provider = "xai"
+        elif model_name.startswith(("gemini", "gemini-")):
+            provider = "google"
+        elif model_name.startswith(("claude", "claude-")):
+            provider = "anthropic"
         else:
-            # Fallback: try to infer from model name patterns
-            if model_name.startswith(("gpt-", "gpt")):
-                provider = "openai"
-            elif model_name.startswith(("grok", "grok-")):
-                provider = "xai"
-            elif model_name.startswith(("gemini", "gemini-")):
-                provider = "google"
-            elif model_name.startswith(("claude", "claude-")):
-                provider = "anthropic"
-            else:
-                raise ValueError(
-                    f"Cannot auto-detect provider for model '{model_name}'. "
-                    f"Please specify provider explicitly: provider='openai', 'google', 'xai', or 'anthropic'"
-                )
+            raise ValueError(
+                f"Cannot auto-detect provider for model '{model_name}'. "
+                f"Please specify provider explicitly: provider='openai', 'google', 'xai', or 'anthropic'"
+            )
 
     # Map provider name to class
     provider_map = {
@@ -102,7 +103,7 @@ def create_provider(
         model_name=model_name,
         temperature=temperature,
         max_tokens=max_tokens,
-        **kwargs
+        **kwargs,
     )
 
     # Initialize provider
@@ -111,15 +112,15 @@ def create_provider(
 
 
 __all__ = [
-    "ProviderInterface",
-    "ProviderConfig",
-    "ProviderBaseline",
-    "ProviderError",
     "APIError",
-    "RateLimitError",
     "AnthropicProvider",
-    "OpenAIProvider",
     "GoogleProvider",
+    "OpenAIProvider",
+    "ProviderBaseline",
+    "ProviderConfig",
+    "ProviderError",
+    "ProviderInterface",
+    "RateLimitError",
     "XAIProvider",
     "create_provider",
 ]

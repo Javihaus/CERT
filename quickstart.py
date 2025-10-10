@@ -5,29 +5,32 @@ CERT SDK Quickstart - See it work in 30 seconds
 No API keys needed - shows hardcoded baselines from paper.
 """
 
+
 def main():
-    print("="*70)
+    print("=" * 70)
     print("CERT SDK - Pipeline Health Check")
-    print("="*70)
+    print("=" * 70)
 
     # Import the core library
-    from cert.models import ModelRegistry
     from cert.core.metrics import pipeline_health_score
+    from cert.models import ModelRegistry
 
     # Show available validated models
     print("\nValidated models from paper:\n")
     models = ModelRegistry.list_models()
 
     for model in models[:5]:  # Show first 5
-        print(f"  {model.model_family:20} C={model.consistency:.3f}  "
-              f"mu={model.mean_performance:.3f}  sigma={model.std_performance:.3f}")
+        print(
+            f"  {model.model_family:20} C={model.consistency:.3f}  "
+            f"mu={model.mean_performance:.3f}  sigma={model.std_performance:.3f}"
+        )
 
     print(f"\n  ... and {len(models) - 5} more")
 
     # Simulate pipeline health check
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Example: 2-agent pipeline health check")
-    print("="*70)
+    print("=" * 70)
 
     # Scenario: GPT-4 -> Claude pipeline
     print("\nPipeline: GPT-4o -> Claude 3.5 Haiku")
@@ -35,10 +38,8 @@ def main():
     gpt4 = ModelRegistry.get_model("gpt-4o")
     claude = ModelRegistry.get_model("claude-3-5-haiku-20241022")
 
-    print(f"\nGPT-4o baseline:    C={gpt4.consistency:.3f}, "
-          f"mu={gpt4.mean_performance:.3f}")
-    print(f"Claude baseline:    C={claude.consistency:.3f}, "
-          f"mu={claude.mean_performance:.3f}")
+    print(f"\nGPT-4o baseline:    C={gpt4.consistency:.3f}, mu={gpt4.mean_performance:.3f}")
+    print(f"Claude baseline:    C={claude.consistency:.3f}, mu={claude.mean_performance:.3f}")
 
     # Calculate expected context propagation effect
     if claude.coordination_2agent:
@@ -51,9 +52,7 @@ def main():
     observability = 0.9  # Good observability
 
     health = pipeline_health_score(
-        epsilon=epsilon,
-        gamma_mean=gamma,
-        observability_coverage=observability
+        epsilon=epsilon, gamma_mean=gamma, observability_coverage=observability
     )
 
     print(f"\nContext propagation effect: gamma={gamma:.3f}")
@@ -74,20 +73,20 @@ def main():
     print(f"\nStatus: {color}{status}{reset}")
 
     # Show what this means
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("What this means:")
-    print("="*70)
-    print(f"  • gamma > 1.0: Sequential context accumulation improves performance")
-    print(f"  • H > 0.8: Pipeline is stable for production")
+    print("=" * 70)
+    print("  • gamma > 1.0: Sequential context accumulation improves performance")
+    print("  • H > 0.8: Pipeline is stable for production")
     print(f"  • C={gpt4.consistency:.3f}: GPT-4o shows consistent behavior")
-    print(f"\nWhat gamma measures:")
-    print(f"  - How attention mechanisms process extended context")
-    print(f"  - Performance change when models see accumulated output")
-    print(f"  - NOT agent coordination or intelligence")
+    print("\nWhat gamma measures:")
+    print("  - How attention mechanisms process extended context")
+    print("  - Performance change when models see accumulated output")
+    print("  - NOT agent coordination or intelligence")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("Next steps:")
-    print("="*70)
+    print("=" * 70)
     print("  1. Run: python examples/basic_usage.py")
     print("  2. Measure your own models with actual API calls")
     print("  3. Monitor production pipelines with CERT metrics")
