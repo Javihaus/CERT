@@ -29,20 +29,65 @@ classifiers = [
 dependencies = [
     "numpy>=1.24.0",
     "scipy>=1.11.0",
-    "sentence-transformers>=2.2.0",
-    "anthropic>=0.7.0",
-    "openai>=1.0.0",
-    "google-generativeai>=0.3.0",
-    "streamlit>=1.28.0",
-    "prometheus-client>=0.19.0",
     "pydantic>=2.0.0",
     "aiohttp>=3.9.0",
     "tenacity>=8.2.0",
+]
+
+[project.optional-dependencies]
+# Core provider dependencies (optional - install only what you need)
+openai = ["openai>=1.0.0"]
+anthropic = ["anthropic>=0.7.0"]
+google = ["google-generativeai>=0.3.0"]
+
+# Semantic analysis (required for full CERT functionality)
+embeddings = ["sentence-transformers>=2.2.0"]
+
+# Framework integrations (optional - install only what you use)
+langchain = ["langchain>=0.1.0", "langgraph>=0.0.20"]
+crewai = ["crewai>=0.1.0"]
+autogen = ["pyautogen>=0.2.0"]
+
+# Visualization and monitoring
+dashboard = [
+    "streamlit>=1.28.0",
+    "pandas>=2.0.0",
+    "plotly>=5.17.0",
+]
+prometheus = ["prometheus-client>=0.19.0"]
+
+# All providers
+all-providers = [
+    "openai>=1.0.0",
+    "anthropic>=0.7.0",
+    "google-generativeai>=0.3.0",
+]
+
+# All integrations
+all-integrations = [
+    "langchain>=0.1.0",
+    "langgraph>=0.0.20",
+    "crewai>=0.1.0",
+    "pyautogen>=0.2.0",
+]
+
+# Complete installation
+all = [
+    "sentence-transformers>=2.2.0",
+    "openai>=1.0.0",
+    "anthropic>=0.7.0",
+    "google-generativeai>=0.3.0",
+    "langchain>=0.1.0",
+    "langgraph>=0.0.20",
+    "crewai>=0.1.0",
+    "pyautogen>=0.2.0",
+    "streamlit>=1.28.0",
+    "prometheus-client>=0.19.0",
     "pandas>=2.0.0",
     "plotly>=5.17.0",
 ]
 
-[project.optional-dependencies]
+# Development dependencies
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",

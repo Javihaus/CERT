@@ -126,12 +126,13 @@ def coordination_effect(
     - ❌ WHY context helps (black box measurement)
 
     Mathematical definition:
-    $$\\gamma^P_{i,j}(t) = \\frac{\\mathbb{E}[P^{\\text{sequential}}_{ij}(t)]}{\\mathbb{E}[P^{\\text{independent}}_i(t)] \\cdot \\mathbb{E}[P^{\\text{independent}}_j(t)]}$$
+    $$\\gamma^P_{i,j}(t) = \\frac{\\mathbb{E}[P^{\\text{sequential}}_{ij}(t)]}{\\mathbb{E}[P^{\\text{baseline}}(t)]}$$
 
     Args:
         coordinated_performance: Performance when models process sequentially
                                 (later models see accumulated context).
         independent_performances: List of independent performance values for each model.
+                                 The baseline is computed as the mean of these values.
 
     Returns:
         Context propagation effect γ.
@@ -160,7 +161,7 @@ def coordination_effect(
         - Claude: γ=1.462 (low baseline, strong context effect)
 
     Note:
-        - For n-model pipelines, denominator is product of all n independent performances
+        - Baseline is computed as the mean of independent performances
         - "coordination_effect" function name retained for API compatibility
         - This is engineering characterization, not coordination science
     """
@@ -170,12 +171,12 @@ def coordination_effect(
     if any(p <= 0 for p in independent_performances):
         raise ValueError("Independent performances must be positive")
 
-    independent_product = float(np.prod(independent_performances))
+    baseline_expected = float(np.mean(independent_performances))
 
-    if independent_product == 0:
-        raise ValueError("Product of independent performances cannot be zero")
+    if baseline_expected == 0:
+        raise ValueError("Baseline expected performance cannot be zero")
 
-    gamma = coordinated_performance / independent_product
+    gamma = coordinated_performance / baseline_expected
 
     return float(gamma)
 
