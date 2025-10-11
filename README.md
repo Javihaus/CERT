@@ -9,9 +9,9 @@
 Your multi-agent system works... sometimes. Same input produces different quality outputs. You can't answer basic questions: Why did performance drop last week? Will adding a third agent help? Should you deploy this?
 
 CERT provides three metrics that make sequential LLM pipelines measurable:
-- **Consistency (C)**: Output quality variance for identical inputs
-- **Context Effect (γ, γ_norm)**: Performance change from sequential processing  
-- **Health Score (H)**: Go/no-go deployment metric
+- **Consistency ($C$)**: Output quality variance for identical inputs
+- **Context Effect ($\gamma, \gamma_{norm})**: Performance change from sequential processing  
+- **Health Score ($H$)**: Go/no-go deployment metric
 
 **Validated across 8 models (GPT-5, Claude Sonnet 4.5, Gemini 3.5, Grok 3, GPT-4o, and more) with 300+ measurements.**
 
@@ -31,12 +31,10 @@ Output:
 
 ```
 ✓ Claude Sonnet 4.5: C=0.892, μ=0.745, γ_norm=1.116 → H=0.78
-✓ GPT-5:            C=0.702, μ=0.543, γ_norm=1.382 → H=0.71
-✓ Gemini 3.5 Pro:   C=0.895, μ=0.831, γ_norm=1.066 → H=0.84
-✓ GPT-4o:           C=0.831, μ=0.638, γ_norm=1.250 → H=0.76
+✓ GPT-5:             C=0.702, μ=0.543, γ_norm=1.382 → H=0.71
+✓ Gemini 3.5 Pro:    C=0.895, μ=0.831, γ_norm=1.066 → H=0.84
+✓ GPT-4o:            C=0.831, μ=0.638, γ_norm=1.250 → H=0.76
 ```
-
-**What this tells you:** Framework measures real variance. Gemini = highest individual quality, lowest context effect. GPT-5 = "team player" optimized for multi-agent pipelines.
 
 See: `quickstart.py`, `tests/test_smoke.py`
 
@@ -46,13 +44,15 @@ See: `quickstart.py`, `tests/test_smoke.py`
 
 ### Install
 
-```bash
-pip install cert-sdk  # When published
+```
+bash
+pip install cert-sdk  # If available
 ```
 
 **OR**
 
-```bash
+```
+bash
 pip install -e .  # From source
 ```
 
@@ -307,24 +307,24 @@ else:
 
 ### Basic Usage
 
-```bash
-jupyter notebook examples/basic_usage.ipynb
+```
+examples/basic_usage.ipynb
 ```
 
 Measure individual agent, interpret metrics (2-3 min)
 
 ### LangChain Pipeline
 
-```bash
-jupyter notebook examples/langchain_research_writer_pipeline.ipynb
+```
+examples/langchain_research_writer_pipeline.ipynb
 ```
 
 3-agent sequential pipeline with health score (5-10 min)
 
 ### Advanced
 
-```bash
-jupyter notebook examples/advanced_usage.ipynb
+```
+examples/advanced_usage.ipynb
 ```
 
 Domain-specific baselines, custom quality scoring (10-15 min)
