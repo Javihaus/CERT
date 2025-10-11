@@ -206,27 +206,29 @@ Output quality variance for identical inputs.
 Performance change from sequential context accumulation.
 
 **Formulas:**
-- $\gamma = P_{sequential} / (\mu_1 \times \mu_2 × ... \times \mu_n) \times \alpha^{(n-1)}$
+- $\gamma = P_{sequential} / (\mu_1 \times\mu_2 \ldots \times \mu_n) \times \alpha^{(n-1)}$
 - $\gamma_{norm} = \gamma^{(1/n)}$ (normalized for cross-length comparison)
 
 **Interpretation:**
-- γ_norm > 1.5: Strong context benefit
-- γ_norm 1.2-1.5: Moderate propagation
-- γ_norm 1.0-1.2: Weak context effect
-- γ_norm < 1.0: Context degradation
+- $\gamma_{norm} > 1.5$: Strong context benefit
+- $1.2 < \gamma_{norm} < 1.5$: Moderate propagation
+- $1.0 < \gamma_{norm} < 1.2$: Weak context effect
+- $\gamma_{norm} < 1.0$: Context degradation
 
 **Use:** Decide if adding agents helps, compare 2-agent vs 5-agent architectures.
 
-### Health Score (H)
+### Health Score ($H$)
 
 Composite operational metric for deployment decisions.
 
-**Formula:** H = (1/(1+ε)) × min(1, γ_norm) × C_obs
+**Formula:** 
+
+$H = (1/(1+\epsilon)) \times min(1, \gamma_{norm}) \times C_{obs}$
 
 **Interpretation:**
-- H > 0.80: Deploy to production
-- H 0.60-0.80: Deploy with monitoring
-- H < 0.60: Do not deploy
+- $H > 0.80$: Deploy to production
+- $0.60 < H < 0.80: Deploy with monitoring
+- $H < 0.60$: Do not deploy
 
 **Use:** Go/no-go decisions, architecture validation, continuous monitoring.
 
@@ -244,7 +246,7 @@ baseline = measure_agent(provider)  # C=0.83
 current = measure_agent(provider)   # C=0.71
 
 if current['consistency'] < baseline['consistency'] - 0.10:
-    alert("⚠️  Consistency degraded 14%")
+    alert("Consistency degraded 14%")
 ```
 
 ### Architecture Selection
@@ -289,11 +291,6 @@ else:
 - Statistical variance in transformer outputs
 - Performance changes from context accumulation
 - Attention mechanism behavior with extended context
-
-### Does not measure:
-- Intelligence, reasoning, or understanding
-- Agent coordination or collaboration
-- Root cause explanations (detects problems, doesn't diagnose)
 
 ---
 
