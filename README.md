@@ -6,14 +6,20 @@
 
 **Production monitoring for nondeterministic LLM pipelines.**
 
-Your multi-agent system works... sometimes. Same input produces different quality outputs. You can't answer basic questions: Why did performance drop last week? Will adding a third agent help? Should you deploy this?
+Your multi-agent system works... sometimes. Same input produces different quality outputs. You can't answer basic questions: 
+
+Why did performance drop last week? 
+
+Will adding a third agent help? 
+
+Should you deploy this?
 
 CERT provides three metrics that make sequential LLM pipelines measurable:
-- **Consistency ($C$)**: Output quality variance for identical inputs
-- **Context Effect ($\gamma, \gamma_{norm})**: Performance change from sequential processing  
-- **Health Score ($H$)**: Go/no-go deployment metric
+- **Consistency** ($C$): Output quality variance for identical inputs
+- **Context Effect** ($\gamma, \gamma_{norm}$): Performance change from sequential processing  
+- **Health Score** ($H$): Go/no-go deployment metric
 
-**Validated across 8 models (GPT-5, Claude Sonnet 4.5, Gemini 3.5, Grok 3, GPT-4o, and more) with 300+ measurements.**
+CERT has been validated across 8 models (GPT-5, Claude Sonnet 4.5, Gemini 3.5, Grok 3, GPT-4o, and more) with 300+ measurements.
 
 ---
 
