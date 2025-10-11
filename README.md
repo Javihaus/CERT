@@ -72,7 +72,7 @@ print(f"Performance: μ={results['mean_performance']:.3f}")
 # Compare to validated baseline
 baseline = cert.ModelRegistry.get_model("gpt-4o")
 if results['consistency'] < baseline.consistency - 0.10:
-    print("⚠️  Degraded vs baseline")
+    print("Degraded vs baseline")
 ```
 
 ### Measure Pipeline
@@ -102,19 +102,19 @@ else:
 
 First measured baselines for GPT-5 and Claude Sonnet 4.5. Validated across 8 models, 4 providers.
 
-| Model | C | μ | γ_norm | Profile |
+| Model | $C$ | $\mu$ | $\gamma_{norm}$ | Profile |
 |-------|---|---|--------|---------|
-| claude-sonnet-4.5 🆕 | 0.892 | 0.745 | 1.116 | Highest consistency, balanced |
+| claude-sonnet-4.5 | 0.892 | 0.745 | 1.116 | Highest consistency, balanced |
 | gemini-3.5-pro | 0.895 | 0.831 | 1.066 | Individual specialist |
 | gpt-4o | 0.831 | 0.638 | 1.250 | Production workhorse |
 | grok-3 | 0.863 | 0.658 | 1.275 | Strong context propagation |
-| gpt-5 🆕 | 0.702 | 0.543 | 1.382 | "Team player" - optimized for multi-agent |
+| gpt-5 | 0.702 | 0.543 | 1.382 | "Team player" - optimized for multi-agent |
 | claude-3-5-haiku | 0.831 | 0.595 | 1.209 | Cost-effective |
 | gpt-4o-mini | 0.831 | 0.638 | 1.250 | Fastest |
 
 **Selection Guide:**
-- **High-reliability**: Claude Sonnet 4.5, Gemini (C > 0.89)
-- **Multi-agent pipelines**: GPT-5, Grok 3 (γ_norm > 1.27)
+- **High-reliability**: Claude Sonnet 4.5, Gemini ($C > 0.89$)
+- **Multi-agent pipelines**: GPT-5, Grok 3 ($\gamma_{norm} > 1.27$)
 - **Cost-optimized**: GPT-4o-mini, Claude Haiku
 
 ```python
@@ -190,24 +190,24 @@ cert_integration.print_metrics()
 
 ## What It Measures
 
-### Consistency (C)
+### Consistency ($C$)
 
 Output quality variance for identical inputs.
 
 **Interpretation:**
-- C > 0.85: Production ready (low variance)
-- C 0.75-0.85: Monitor closely
-- C < 0.75: Investigate (high variance)
+- $C > 0.85$: Production ready (low variance)
+- $0.75 < C < 0.85$: Monitor closely
+- $C < 0.75$: Investigate (high variance)
 
 **Use:** Detect model drift, validate prompt changes, assess reliability.
 
-### Context Effect (γ, γ_norm)
+### Context Effect ($\gamma$, $\gamma_{norm}$)
 
 Performance change from sequential context accumulation.
 
 **Formulas:**
-- γ = P_sequential / (μ₁ × μ₂ × ... × μₙ × α^(n-1))
-- γ_norm = γ^(1/n) (normalized for cross-length comparison)
+- $\gamma = P_{sequential} / (\mu_1 \times \mu_2 × ... \times \mu_n) \times \alpha^{(n-1)}$
+- $\gamma_{norm} = \gamma^{(1/n)}$ (normalized for cross-length comparison)
 
 **Interpretation:**
 - γ_norm > 1.5: Strong context benefit
