@@ -11,7 +11,11 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from cert.analysis.quality import QualityScorer
-from cert.core.metrics import coordination_effect, pipeline_health_score
+from cert.core.metrics import (
+    coordination_effect,
+    normalized_context_effect,
+    pipeline_health_score,
+)
 from cert.models import ModelBaseline
 from cert.providers.base import ProviderInterface
 
@@ -43,7 +47,9 @@ class PipelineMetrics:
     intermediate_qualities: List[float] = field(default_factory=list)
 
     # Coordination metrics
-    coordination_effect: Optional[float] = None
+    coordination_effect: Optional[float] = None  # Raw γ
+    coordination_effect_norm: Optional[float] = None  # Normalized γ_norm
+    n_agents: int = 0  # Number of agents in pipeline
     independent_performances: List[float] = field(default_factory=list)
     coordinated_performance: Optional[float] = None
 
@@ -63,6 +69,8 @@ class PipelineMetrics:
             "total_duration_ms": self.total_duration_ms,
             "output_quality": self.output_quality,
             "coordination_effect": self.coordination_effect,
+            "coordination_effect_norm": self.coordination_effect_norm,
+            "n_agents": self.n_agents,
             "health_score": self.health_score,
             "observability_coverage": self.observability_coverage,
         }
@@ -179,10 +187,11 @@ class CERTIntegration(ABC):
 
     def calculate_coordination_effect(self) -> Optional[float]:
         """
-        Calculate coordination effect (γ) from recorded executions.
+        Calculate coordination effect (γ) and normalized effect (γ_norm) from recorded executions.
 
         Returns:
-            Coordination effect if calculable, None otherwise.
+            Raw coordination effect γ if calculable, None otherwise.
+            Also stores γ_norm in metrics.coordination_effect_norm.
         """
         if len(self.metrics.executions) < 2:
             return None
@@ -195,13 +204,21 @@ class CERTIntegration(ABC):
         if len(self.metrics.intermediate_qualities) < 2:
             return None
 
-        # Calculate γ
+        # Calculate raw γ
         gamma = coordination_effect(
             coordinated_performance=self.metrics.output_quality,
             independent_performances=self.metrics.intermediate_qualities,
         )
 
+        # Calculate normalized γ_norm
+        n_agents = len(self.metrics.executions)
+        gamma_norm = normalized_context_effect(gamma, n_agents)
+
+        # Store both
         self.metrics.coordination_effect = gamma
+        self.metrics.coordination_effect_norm = gamma_norm
+        self.metrics.n_agents = n_agents
+
         return gamma
 
     def calculate_pipeline_health(
@@ -209,21 +226,28 @@ class CERTIntegration(ABC):
         prediction_error: Optional[float] = None,
     ) -> Optional[float]:
         """
-        Calculate pipeline health score.
+        Calculate pipeline health score using normalized γ_norm.
 
         Args:
             prediction_error: Optional prediction error (ε).
 
         Returns:
             Health score (0-1) if calculable, None otherwise.
+
+        Note:
+            Uses normalized γ_norm (not raw γ) for health calculation
+            per Equation 8 of the paper.
         """
-        # Need coordination effect
+        # Need coordination effect (calculates both γ and γ_norm)
         if self.metrics.coordination_effect is None:
             gamma = self.calculate_coordination_effect()
             if gamma is None:
                 return None
-        else:
-            gamma = self.metrics.coordination_effect
+
+        # Get normalized gamma
+        gamma_norm = self.metrics.coordination_effect_norm
+        if gamma_norm is None:
+            return None
 
         # Use provided or stored prediction error
         epsilon = prediction_error or self.metrics.prediction_error
@@ -234,10 +258,10 @@ class CERTIntegration(ABC):
             else:
                 epsilon = 0.1  # Conservative default
 
-        # Calculate health
+        # Calculate health using γ_norm (not raw γ)
         health = pipeline_health_score(
             epsilon=epsilon,
-            gamma_mean=gamma,
+            gamma_norm=gamma_norm,
             observability_coverage=self.metrics.observability_coverage,
         )
 
@@ -299,8 +323,12 @@ class CERTIntegration(ABC):
             print(f"  Output quality:   {self.metrics.output_quality:.3f}")
 
         if self.metrics.coordination_effect is not None:
-            print("\nCoordination Metrics:")
-            print(f"  γ (coordination): {self.metrics.coordination_effect:.3f}")
+            print("\nContext Propagation Metrics:")
+            print(f"  γ (raw):          {self.metrics.coordination_effect:.3f}")
+            if self.metrics.coordination_effect_norm is not None:
+                print(f"  γ_norm:           {self.metrics.coordination_effect_norm:.3f}")
+            if self.metrics.n_agents > 0:
+                print(f"  n_agents:         {self.metrics.n_agents}")
             if self.metrics.coordination_effect > 1.0:
                 improvement = (self.metrics.coordination_effect - 1.0) * 100
                 print(f"  Improvement:      +{improvement:.1f}%")

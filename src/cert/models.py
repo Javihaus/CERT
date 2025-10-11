@@ -24,7 +24,7 @@ class ModelBaseline:
     """
     Validated baseline metrics for a specific model.
 
-    All values are measured from the CERT paper validation (Tables 1-3).
+    All values are measured from the CERT paper validation (Tables 1-4).
 
     Attributes:
         model_id: Unique model identifier (e.g., "gpt-4o", "claude-3-haiku-20240307").
@@ -37,6 +37,13 @@ class ModelBaseline:
                            Field name retained for API compatibility.
         coordination_5agent: Context propagation effect γ for 5-model pipelines from Table 3 (optional).
                            Field name retained for API compatibility.
+        coordination_2agent_norm: Normalized context effect γ_norm for 2-agent (γ^(1/2)) (optional).
+        coordination_5agent_norm: Normalized context effect γ_norm for 5-agent (γ^(1/5)) (optional).
+        predicted_baseline_5agent: Predicted baseline performance for 5-agent from Equation 6 (optional).
+        observed_5agent: Observed 5-agent pipeline performance from Table 4 (optional).
+        epsilon_5agent: Prediction error ε for 5-agent from Table 4 (optional).
+        cobs_5agent: Observability coverage for 5-agent validation from Table 4 (optional).
+        health_5agent: Pipeline health score H for 5-agent from Table 4 (optional).
         paper_section: Reference to paper section/table.
         validation_date: When baseline was measured (YYYY-MM format).
     """
@@ -49,6 +56,13 @@ class ModelBaseline:
     std_performance: float
     coordination_2agent: Optional[float] = None
     coordination_5agent: Optional[float] = None
+    coordination_2agent_norm: Optional[float] = None
+    coordination_5agent_norm: Optional[float] = None
+    predicted_baseline_5agent: Optional[float] = None
+    observed_5agent: Optional[float] = None
+    epsilon_5agent: Optional[float] = None
+    cobs_5agent: Optional[float] = None
+    health_5agent: Optional[float] = None
     paper_section: str = "Table 1"
     validation_date: str = "2025-01"
 
@@ -79,8 +93,15 @@ class ModelRegistry:
             mean_performance=0.595,
             std_performance=0.075,
             coordination_2agent=1.462,
-            coordination_5agent=1.197,
-            paper_section="Tables 1-3",
+            coordination_5agent=13.46,
+            coordination_2agent_norm=1.209,  # sqrt(1.462)
+            coordination_5agent_norm=1.685,  # 13.46^(1/5)
+            predicted_baseline_5agent=0.0555,
+            observed_5agent=0.747,
+            epsilon_5agent=12.46,
+            cobs_5agent=0.87,
+            health_5agent=0.43,
+            paper_section="Tables 1-4",
             validation_date="2025-01",
         ),
         # Claude 3.5 Haiku
@@ -92,8 +113,15 @@ class ModelRegistry:
             mean_performance=0.595,
             std_performance=0.075,
             coordination_2agent=1.462,
-            coordination_5agent=1.197,
-            paper_section="Tables 1-3",
+            coordination_5agent=13.46,
+            coordination_2agent_norm=1.209,  # sqrt(1.462)
+            coordination_5agent_norm=1.685,  # 13.46^(1/5)
+            predicted_baseline_5agent=0.0555,
+            observed_5agent=0.747,
+            epsilon_5agent=12.46,
+            cobs_5agent=0.87,
+            health_5agent=0.43,
+            paper_section="Tables 1-4",
             validation_date="2025-01",
         ),
         # GPT-4o (baseline validation)
@@ -105,8 +133,15 @@ class ModelRegistry:
             mean_performance=0.638,
             std_performance=0.069,
             coordination_2agent=1.562,
-            coordination_5agent=0.997,
-            paper_section="Tables 1-3",
+            coordination_5agent=9.71,
+            coordination_2agent_norm=1.250,  # sqrt(1.562)
+            coordination_5agent_norm=1.578,  # 9.71^(1/5)
+            predicted_baseline_5agent=0.0652,
+            observed_5agent=0.633,
+            epsilon_5agent=8.71,
+            cobs_5agent=0.89,
+            health_5agent=0.49,
+            paper_section="Tables 1-4",
             validation_date="2025-01",
         ),
         # GPT-4o-mini
@@ -118,8 +153,15 @@ class ModelRegistry:
             mean_performance=0.638,
             std_performance=0.069,
             coordination_2agent=1.562,
-            coordination_5agent=0.997,
-            paper_section="Tables 1-3",
+            coordination_5agent=9.71,
+            coordination_2agent_norm=1.250,  # sqrt(1.562)
+            coordination_5agent_norm=1.578,  # 9.71^(1/5)
+            predicted_baseline_5agent=0.0652,
+            observed_5agent=0.633,
+            epsilon_5agent=8.71,
+            cobs_5agent=0.89,
+            health_5agent=0.49,
+            paper_section="Tables 1-4",
             validation_date="2025-01",
         ),
         # Grok 3 (baseline validation)
@@ -131,8 +173,15 @@ class ModelRegistry:
             mean_performance=0.658,
             std_performance=0.062,
             coordination_2agent=1.625,
-            coordination_5agent=1.140,
-            paper_section="Tables 1-3",
+            coordination_5agent=10.48,
+            coordination_2agent_norm=1.275,  # sqrt(1.625)
+            coordination_5agent_norm=1.617,  # 10.48^(1/5)
+            predicted_baseline_5agent=0.0707,
+            observed_5agent=0.741,
+            epsilon_5agent=9.48,
+            cobs_5agent=0.85,
+            health_5agent=0.47,
+            paper_section="Tables 1-4",
             validation_date="2025-01",
         ),
         # Gemini 3.5 Pro (baseline validation)
@@ -144,8 +193,15 @@ class ModelRegistry:
             mean_performance=0.831,
             std_performance=0.090,
             coordination_2agent=1.137,
-            coordination_5agent=1.088,
-            paper_section="Tables 1-3",
+            coordination_5agent=3.64,
+            coordination_2agent_norm=1.066,  # sqrt(1.137)
+            coordination_5agent_norm=1.521,  # 3.64^(1/5)
+            predicted_baseline_5agent=0.1982,
+            observed_5agent=0.722,
+            epsilon_5agent=2.64,
+            cobs_5agent=0.88,
+            health_5agent=0.62,
+            paper_section="Tables 1-4",
             validation_date="2025-01",
         ),
         # GPT-5 / ChatGPT-5 (same model, baseline validation)
@@ -158,6 +214,13 @@ class ModelRegistry:
             std_performance=0.048,
             coordination_2agent=1.911,
             coordination_5agent=None,  # To be measured
+            coordination_2agent_norm=1.382,  # sqrt(1.911)
+            coordination_5agent_norm=None,  # To be measured
+            predicted_baseline_5agent=None,
+            observed_5agent=None,
+            epsilon_5agent=None,
+            cobs_5agent=None,
+            health_5agent=None,
             paper_section="Community Measurement",
             validation_date="2025-10",
         ),
@@ -171,6 +234,13 @@ class ModelRegistry:
             std_performance=0.058,
             coordination_2agent=1.245,
             coordination_5agent=None,  # To be measured
+            coordination_2agent_norm=1.116,  # sqrt(1.245)
+            coordination_5agent_norm=None,  # To be measured
+            predicted_baseline_5agent=None,
+            observed_5agent=None,
+            epsilon_5agent=None,
+            cobs_5agent=None,
+            health_5agent=None,
             paper_section="Community Measurement",
             validation_date="2025-10",
         ),
@@ -184,6 +254,13 @@ class ModelRegistry:
             std_performance=0.058,
             coordination_2agent=1.245,
             coordination_5agent=None,  # To be measured
+            coordination_2agent_norm=1.116,  # sqrt(1.245)
+            coordination_5agent_norm=None,  # To be measured
+            predicted_baseline_5agent=None,
+            observed_5agent=None,
+            epsilon_5agent=None,
+            cobs_5agent=None,
+            health_5agent=None,
             paper_section="Community Measurement",
             validation_date="2025-10",
         ),
@@ -367,9 +444,13 @@ class ModelRegistry:
                 )
                 lines.append(f"    model_id: {model.model_id}")
                 if model.coordination_2agent:
-                    lines.append(f"    gamma(2-agent): {model.coordination_2agent:.3f}")
+                    gamma_norm_str = f", γ_norm={model.coordination_2agent_norm:.3f}" if model.coordination_2agent_norm else ""
+                    lines.append(f"    gamma(2-agent): {model.coordination_2agent:.3f}{gamma_norm_str}")
                 if model.coordination_5agent:
-                    lines.append(f"    gamma(5-agent): {model.coordination_5agent:.3f}")
+                    gamma_norm_str = f", γ_norm={model.coordination_5agent_norm:.3f}" if model.coordination_5agent_norm else ""
+                    lines.append(f"    gamma(5-agent): {model.coordination_5agent:.3f}{gamma_norm_str}")
+                if model.health_5agent:
+                    lines.append(f"    health(5-agent): {model.health_5agent:.2f}")
                 lines.append("")
 
         lines.append("=" * 70)

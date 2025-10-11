@@ -150,6 +150,8 @@ Low consistency scores may indicate:
 
 The gamma (γ) metric quantifies how accumulated context affects performance through sequential processing stages. Understanding this effect is critical for optimizing multi-agent architectures.
 
+CERT provides both raw γ and normalized γ_norm values. The normalized form (γ_norm = γ^(1/n)) enables fair comparison across pipelines of different lengths.
+
 ```python
 # Analyze context effects across stages
 effect = await cert.measure_context_effect(
@@ -158,16 +160,68 @@ effect = await cert.measure_context_effect(
     accumulated_context=previous_outputs
 )
 
-if effect['gamma'] < 0:
-    print("Warning: Performance degradation with accumulated context")
+print(f"Raw gamma: {effect['gamma']:.3f}")
+print(f"Normalized gamma: {effect['gamma_norm']:.3f}")
+print(f"Pipeline length: {effect['n_agents']}")
+
+# Interpret normalized gamma (per-step context benefit)
+if effect['gamma_norm'] > 1.5:
+    print("Strong per-step context benefit - sequential architecture recommended")
+elif effect['gamma_norm'] > 1.2:
+    print("Moderate context propagation - deploy with monitoring")
+elif effect['gamma_norm'] > 1.0:
+    print("Weak context effect - consider evaluation")
+else:
+    print("Context degradation - investigate pipeline structure")
 ```
+
+**Operational Thresholds for γ_norm (Table 9 from paper):**
+
+| γ_norm Range | Interpretation | Recommendation |
+|--------------|----------------|----------------|
+| > 1.5 | Strong per-step context benefit | Sequential architecture recommended |
+| 1.2 - 1.5 | Moderate context propagation | Deploy with monitoring |
+| 1.0 - 1.2 | Weak context effect | Consider additional evaluation |
+| < 1.0 | Context degradation | Investigate pipeline structure |
+
+**Model Baselines from Paper:**
+
+| Model | 2-Agent γ_norm | 5-Agent γ_norm | Health (5-Agent) |
+|-------|----------------|----------------|------------------|
+| Claude Haiku 3.5 | 1.209 | 1.685 | 0.43 |
+| GPT-4o | 1.250 | 1.578 | 0.49 |
+| Grok 3 | 1.275 | 1.617 | 0.47 |
+| Gemini 3.5 Pro | 1.066 | 1.521 | 0.62 |
 
 ### Pipeline Health
 
-Pipeline Health provides a single composite metric for operational decision-making:
+Pipeline Health provides a single composite metric for operational decision-making. The health score uses **normalized γ_norm** (not raw γ) to ensure comparability across different pipeline lengths.
+
+**Health Score Formula (Equation 8):**
+```
+H = (1 / (1 + ε)) × min(1, γ_norm) × C_obs
+```
+
+Where:
+- **ε** = Prediction error (relative to baseline with degradation factor α=0.93)
+- **γ_norm** = Normalized context propagation effect (γ^(1/n))
+- **C_obs** = Observability coverage (fraction of instrumented interactions)
+
+**Baseline Calculation (Equation 6):**
+The predicted baseline uses a product baseline with information degradation:
+```
+P_baseline = (∏ μ_i) × α^(n-1)
+```
+
+Where α=0.93 models cumulative information loss through repeated encoding/decoding cycles.
 
 ```python
 health = await cert.assess_pipeline_health(pipeline)
+
+print(f"Health Score: {health['score']:.2f}")
+print(f"Prediction Error: {health['epsilon']:.2f}")
+print(f"Normalized Gamma: {health['gamma_norm']:.3f}")
+print(f"Observability: {health['observability_coverage']:.2f}")
 
 if health['score'] > 0.8:
     print("Pipeline ready for production")
@@ -177,6 +231,15 @@ else:
     print("Pipeline requires optimization")
     print(f"Issues: {health['issues']}")
 ```
+
+**Health Score Thresholds:**
+
+| Score Range | Status | Action |
+|-------------|--------|--------|
+| H > 0.8 | Healthy | Standard monitoring |
+| 0.6 < H ≤ 0.8 | Acceptable | Monitor for degradation |
+| 0.4 < H ≤ 0.6 | Degraded | Investigate issues |
+| H ≤ 0.4 | Critical | Immediate attention required |
 
 ## Framework Integrations
 
